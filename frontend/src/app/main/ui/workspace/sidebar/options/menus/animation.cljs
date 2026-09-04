@@ -102,6 +102,21 @@
                                             [:easing-params param]
                                             (or (d/parse-double value) 0))}))))
 
+        set-keyframe-value
+        (mf/use-fn
+         (mf/deps shape page-id property)
+         (fn [t value]
+           (st/emit! (dwa/update-animation-keyframe
+                      {:page-id page-id
+                       :shape-id (dm/get-prop shape :id)
+                       :property property
+                       :t t
+                       ;; only numeric tracks are editable in place;
+                       ;; parse failures keep the previous value
+                       :update-fn #(assoc %
+                                           :value (or (d/parse-double value)
+                                                      (:value %)))}))))
+
         ;; drag-to-move: horizontal pointer drag over a keyframe chip
         ;; re-times it. The event commits once, on pointer release, so
         ;; the undo stack stays clean.
@@ -162,7 +177,11 @@
                  :on-pointer-move on-keyframe-drag-move
                  :on-lost-pointer-capture on-keyframe-drag-end}
            [:span {:class (stl/css :keyframe-t)} (str display-t "ms")]
-           [:span {:class (stl/css :keyframe-value)} (pr-str (:value kf))]
+           (if (number? (:value kf))
+             [:& numeric-input* {:class (stl/css :keyframe-value)
+                                 :default-value (str (:value kf))
+                                 :on-change #(set-keyframe-value (:t kf) %)}]
+             [:span {:class (stl/css :keyframe-value)} (pr-str (:value kf))])
            [:& select {:default-value (name (or (:easing kf) :linear))
                        :options (mapv #(do {:value (name %)
                                             :label (easing-label %)})
