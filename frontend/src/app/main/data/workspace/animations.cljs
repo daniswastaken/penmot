@@ -85,6 +85,20 @@
                               #(ctsan/move-keyframe % property from-t to-t)))
                            {:page-id page-id})))))
 
+(defn add-animation
+  "Set (or replace) the whole animation attribute on a shape."
+  [{:keys [page-id shape-id animation] :as params}]
+  (ptk/reify ::add-animation
+    ptk/WatchEvent
+    (watch [_ _ _]
+      (rx/of
+       (dwsh/update-shapes [shape-id]
+                           (fn [shape]
+                             (if (ctsan/animation-empty? animation)
+                               (dissoc shape :animation)
+                               (assoc shape :animation animation)))
+                           {:page-id page-id})))))
+
 (defn update-animation-playback
   "Set playback options (loop/alternate) on the shape animation."
   [{:keys [page-id shape-id playback] :as params}]

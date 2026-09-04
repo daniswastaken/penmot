@@ -109,3 +109,9 @@
 .playback-mode {
   display: flex;
 }
+
+.smart-animation {
+  display: flex;
+  gap: deprecated.$s-8;
+  padding-block-end: deprecated.$s-4;
+}

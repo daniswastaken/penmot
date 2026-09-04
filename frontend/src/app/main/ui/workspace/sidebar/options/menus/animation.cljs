@@ -17,11 +17,14 @@
    [app.common.data :as d]
    [app.common.data.macros :as dm]
    [app.common.types.shape.animation :as ctsan]
-   [app.main.data.workspace.animations :as dwa]
-   [app.main.store :as st]
-   [app.main.ui.components.select :refer [select]]
-   [app.main.ui.components.title-bar :refer [title-bar*]]
-   [app.main.ui.ds.buttons.icon-button :refer [icon-button*]]
+    [app.main.data.workspace.animations :as dwa]
+    [app.main.data.workspace.smart-animation :as dwsa]
+    [app.main.refs :as refs]
+    [app.main.store :as st]
+    [app.main.ui.components.select :refer [select]]
+    [app.main.ui.components.title-bar :refer [title-bar*]]
+    [app.main.ui.ds.buttons.button :refer [button*]]
+    [app.main.ui.ds.buttons.icon-button :refer [icon-button*]]
    [app.main.ui.ds.controls.numeric-input :refer [numeric-input*]]
    [app.main.ui.ds.foundations.assets.icon :as i]
     [app.main.ui.ds.product.empty-state :refer [empty-state*]]
@@ -235,7 +238,22 @@
            (st/emit! (dwa/update-animation-playback
                       {:page-id page-id
                        :shape-id (dm/get-prop shape :id)
-                       :playback {:loop (keyword value)}}))))]
+                       :playback {:loop (keyword value)}}))))
+
+        workspace-local (mf/deref refs/workspace-local)
+        snapshot (get-in workspace-local [:smart-animation-snapshot :snapshot])
+
+        capture-snapshot
+        (mf/use-fn
+         #(st/emit! (dwsa/capture-smart-animation-snapshot)))
+
+        clear-snapshot
+        (mf/use-fn
+         #(st/emit! (dwsa/clear-smart-animation-snapshot)))
+
+        generate-animation
+        (mf/use-fn
+         #(st/emit! (dwsa/generate-smart-animation {})))]
 
     [:div {:class (stl/css :section)}
      [:div {:class (stl/css :title)}
@@ -252,6 +270,19 @@
 
      (when show-content?
        [:div {:class (stl/css :content)}
+        [:div {:class (stl/css :smart-animation)}
+         [:> button* {:variant "secondary"
+                      :on-click (if (nil? snapshot)
+                                  capture-snapshot
+                                  clear-snapshot)}
+          (tr (if (nil? snapshot)
+                "workspace.options.animation.smart.capture"
+                "workspace.options.animation.smart.clear"))]
+         (when (some? snapshot)
+           [:> button* {:variant "primary"
+                        :on-click generate-animation}
+            (tr "workspace.options.animation.smart.generate")])]
+
         (if animation
           [:*
            (for [property (ctsan/property-paths animation)]
