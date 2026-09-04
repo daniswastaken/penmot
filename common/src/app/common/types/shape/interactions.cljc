@@ -40,7 +40,8 @@
     :toggle-overlay
     :close-overlay
     :prev-screen
-    :open-url})
+    :open-url
+    :play-animation})
 
 (def overlay-positioning-types
   #{:manual
@@ -177,6 +178,11 @@
    [:event-type [::sm/one-of event-types]]
    [:url :string]])
 
+(def schema:play-animation-interaction
+  [:map {:title "PlayAnimationInteraction"}
+   [:action-type [:= :play-animation]]
+   [:event-type [::sm/one-of event-types]]])
+
 (def schema:interaction
   [:schema {:title "Interaction"
             :gen/gen (sg/one-of (sg/generator schema:navigate-interaction)
@@ -193,7 +199,8 @@
      [:toggle-overlay schema:toggle-overlay-interaction]
      [:close-overlay schema:close-overlay-interaction]
      [:prev-screen schema:prev-scren-interaction]
-     [:open-url schema:open-url-interaction]]]])
+     [:open-url schema:open-url-interaction]
+     [:play-animation schema:play-animation-interaction]]]])
 
 (def check-interaction
   (sm/check-fn schema:interaction))
@@ -271,10 +278,14 @@
             (assoc interaction
                    :action-type action-type)
 
-            :open-url
-            (assoc interaction
-                   :action-type action-type
-                   :url (get interaction :url ""))))]
+             :open-url
+             (assoc interaction
+                    :action-type action-type
+                    :url (get interaction :url ""))
+
+             :play-animation
+             (assoc interaction
+                    :action-type action-type)))]
 
     (cond-> new-interaction
       (not (allowed-animation? action-type

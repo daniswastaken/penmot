@@ -15,6 +15,7 @@
    [app.common.uuid :as uuid]
    [app.main.data.common :as dcm]
    [app.main.data.workspace.interactions :as dwi]
+   [app.main.features :as features]
    [app.main.refs :as refs]
    [app.main.store :as st]
    [app.main.ui.components.radio-buttons :refer [radio-button radio-buttons]]
@@ -59,6 +60,7 @@
                         (get destination :name (tr "workspace.options.interaction-self")))
     :prev-screen    (tr "workspace.options.interaction-prev-screen")
     :open-url       (tr "workspace.options.interaction-open-url")
+    :play-animation (tr "workspace.options.interaction-play-animation")
     "--"))
 
 (defn- get-frames-options
@@ -343,12 +345,14 @@
                                  (cond-> (cfh/frame-shape? shape)
                                    (conj {:value :after-delay :label (tr "workspace.options.interaction-after-delay")})))
 
-        action-type-options [{:value :navigate       :label (tr "workspace.options.interaction-navigate-to")}
-                             {:value :open-overlay   :label (tr "workspace.options.interaction-open-overlay")}
-                             {:value :toggle-overlay :label (tr "workspace.options.interaction-toggle-overlay")}
-                             {:value :close-overlay  :label (tr "workspace.options.interaction-close-overlay")}
-                             {:value :prev-screen    :label (tr "workspace.options.interaction-prev-screen")}
-                             {:value :open-url       :label (tr "workspace.options.interaction-open-url")}]
+        action-type-options (cond-> [{:value :navigate       :label (tr "workspace.options.interaction-navigate-to")}
+                                     {:value :open-overlay   :label (tr "workspace.options.interaction-open-overlay")}
+                                     {:value :toggle-overlay :label (tr "workspace.options.interaction-toggle-overlay")}
+                                     {:value :close-overlay  :label (tr "workspace.options.interaction-close-overlay")}
+                                     {:value :prev-screen    :label (tr "workspace.options.interaction-prev-screen")}
+                                     {:value :open-url       :label (tr "workspace.options.interaction-open-url")}]
+                              (features/use-feature "animations/v1")
+                              (conj {:value :play-animation :label (tr "workspace.options.interaction-play-animation")}))
 
         frames-opts         (get-frames-options frames shape)
 

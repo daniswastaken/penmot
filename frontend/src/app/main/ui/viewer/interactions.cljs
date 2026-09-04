@@ -45,7 +45,7 @@
         animations-enabled? (features/use-feature "animations/v1")
 
         [animation-elapsed _animation-playing? has-animations?]
-        (hooks-anim/use-animation-playback objects)
+        (hooks-anim/use-animation-playback objects (:id frame))
 
         ;; the offset prepare-objects moves shapes by (negated)
         anim-vector

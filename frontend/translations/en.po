@@ -7631,6 +7631,10 @@ msgstr "Bezier"
 msgid "workspace.options.animation.easing.hold"
 msgstr "Hold"
 
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-play-animation"
+msgstr "Play animation"
+
 #: src/app/main/ui/workspace/sidebar/options/menus/blur.cljs
 #, unused
 msgid "workspace.options.blur-effects-options.title"

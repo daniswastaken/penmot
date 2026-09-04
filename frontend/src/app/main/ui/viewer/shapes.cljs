@@ -144,6 +144,10 @@
     :open-url
     (st/emit! (dom/open-new-window (:url interaction)))
 
+    :play-animation
+    (when-let [frame-id (:frame-id shape)]
+      (st/emit! (dv/restart-frame-animations frame-id)))
+
     nil))
 
 ;; Perform the opposite action of an interaction, if possible

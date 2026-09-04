@@ -113,7 +113,7 @@
          animations-enabled? (features/use-feature "animations/v1")
 
          [animation-elapsed _animation-playing? has-animations?]
-         (hooks-anim/use-animation-playback objects)
+         (hooks-anim/use-animation-playback objects frame-id)
 
          ;; re-render the wasm frame whenever the playback clock moves
          _ (mf/use-effect

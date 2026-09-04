@@ -608,6 +608,17 @@
     (update [_ state]
       (dissoc state :viewer-animations))))
 
+(defn restart-frame-animations
+  "Bump the per-frame animation restart counter. The viewer viewports
+  watch it through `:viewer-animation-restarts` and (re)start their
+  local playback clocks for that frame."
+  [frame-id]
+  (ptk/reify ::restart-frame-animations
+    ptk/UpdateEvent
+    (update [_ state]
+      (let [current (get-in state [:viewer-animation-restarts frame-id] 0)]
+        (assoc-in state [:viewer-animation-restarts frame-id] (inc current))))))
+
 ;; --- Navigation inside page
 
 (defn go-to-frame-by-index
