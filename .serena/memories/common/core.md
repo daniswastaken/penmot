@@ -31,6 +31,7 @@ Some legacy code violates this layering; do not copy those violations into new c
 Model, schema, and persistence shape:
 - File/page/shape/component attr changes, import/export surfaces, inspector/codegen, and cross-module checklist: `mem:common/data-model-change-checklist`.
 - Token data structures, token import/export, active theme/set semantics, and schema/coercion behavior: `mem:common/tokens-schema-subtleties`.
+- Keyframe `:animation` attr, easing/sampling, and smart-animate diff (cross-module, ends in `mem:frontend/shape-animation`): `mem:frontend/shape-animation`.
 
 Geometry and layout:
 - Shape geometry invariants, redundant geometry fields, and geometry-sensitive tests: `mem:common/geometry-invariants`.

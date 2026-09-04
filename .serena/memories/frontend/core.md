@@ -41,6 +41,7 @@ Workspace behavior:
 - Workspace state, commits, persistence, undo, repo calls, and refs: `mem:frontend/workspace-state-persistence-subtleties`.
 - Workspace transforms, modifier previews, WASM modifier integration, and transform commits: `mem:frontend/workspace-transform-subtleties`.
 - Workspace token application/propagation: `mem:frontend/workspace-token-subtleties`; shared token data/schema: `mem:common/tokens-schema-subtleties`.
+- Keyframe animation data model, easing/sampling, authoring UI, viewer playback (SVG+WASM), and `animations/v1` flag: `mem:frontend/shape-animation`.
 
 App shell and product flows:
 - Routing, root app shell, websocket, and global errors: `mem:frontend/routing-app-shell-subtleties`.
@@ -57,4 +58,4 @@ Diagnostics and validation:
 
 ## Areas without focused memories
 
-These frontend areas currently have no dedicated Serena memory beyond this architecture entry and nearby source/tests: clipboard, drawing tools, boolean/path operations, interactions/prototyping, color/style asset management, grid-layout editing UI, comments UI, fonts UI, and many dashboard/settings subflows. Treat work there as less memory-covered and inspect source/tests more carefully.
+These frontend areas currently have no dedicated Serena memory beyond this architecture entry and nearby source/tests: clipboard, drawing tools, boolean/path operations, interactions/prototyping UI (the animation half is covered by `mem:frontend/shape-animation`), color/style asset management, grid-layout editing UI, comments UI, fonts UI, and many dashboard/settings subflows. Treat work there as less memory-covered and inspect source/tests more carefully.
