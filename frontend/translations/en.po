@@ -7600,6 +7600,26 @@ msgid "workspace.options.animation.prop.r4"
 msgstr "Radius 4"
 
 #: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.fills"
+msgstr "Fill"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.strokes"
+msgstr "Stroke"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.shadow"
+msgstr "Shadow"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.blur"
+msgstr "Layer blur"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.background-blur"
+msgstr "Background blur"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
 msgid "workspace.options.animation.easing.linear"
 msgstr "Linear"
 

@@ -46,6 +46,51 @@
   [easing]
   (tr (str "workspace.options.animation.easing." (name easing))))
 
+(defn- track-options
+  "Addable tracks for a shape: the scalar props plus, when the shape
+  has them, the structured paint entries (first element of
+  fills/strokes/shadow, and the blur maps). Values encode the
+  property path: plain scalars as the attr name, indexed entries as
+  `<attr>-0`, whole maps as the attr name."
+  [shape]
+  (let [scalar-opts
+        (mapv #(do {:value (name %) :label (prop-label %)})
+              animatable-props)
+
+        indexed-opts
+        (into []
+              (keep (fn [[attr entries]]
+                      (when (seq entries)
+                        {:value (dm/str (name attr) "-0")
+                         :label (prop-label attr)})))
+              [[:fills (:fills shape)]
+               [:strokes (:strokes shape)]
+               [:shadow (:shadow shape)]])
+
+        map-opts
+        (into []
+              (keep (fn [[attr v]]
+                      (when (some? v)
+                        {:value (name attr) :label (prop-label attr)})))
+              [[:blur (:blur shape)]
+               [:background-blur (:background-blur shape)]])]
+
+    (concat scalar-opts indexed-opts map-opts)))
+
+(defn- parse-track-option
+  "Decode an add-track select value into [property-path value]."
+  [shape value]
+  (let [[_ attr-part index-part] (re-matches #"(.+)-(\d+)" value)]
+    (if (some? attr-part)
+      (let [attr (keyword attr-part)
+            index (d/parse-integer index-part)
+            elements (vec (or (get shape attr) []))]
+        (when (< index (count elements))
+          [[attr index] (nth elements index)]))
+      (let [attr (keyword value)]
+        (when-let [v (dm/get-prop shape attr)]
+          [[attr] v])))))
+
 (mf/defc track-row*
   {::mf/private true}
   [{:keys [shape page-id animation property]}]
@@ -57,7 +102,14 @@
         (mf/use-fn
          (mf/deps shape page-id property)
          (fn [t]
-           (let [value (dm/get-prop shape prop-key)]
+           ;; for indexed tracks the current value is the element the
+           ;; path addresses; scalars read the attr directly
+           (let [value (if (= 2 (count property))
+                        (let [[attr index] property
+                              elements (vec (or (dm/get-prop shape attr) []))]
+                          (when (< index (count elements))
+                            (nth elements index)))
+                        (dm/get-prop shape prop-key))]
              (st/emit! (dwa/add-animation-keyframe
                         {:page-id page-id
                          :shape-id (dm/get-prop shape :id)
@@ -233,15 +285,13 @@
         (mf/use-fn
          (mf/deps shape page-id)
          (fn [value]
-           (let [prop (keyword value)
-                 prop-value (dm/get-prop shape prop)]
-             (when (some? prop-value)
-               (st/emit! (dwa/add-animation-keyframe
-                          {:page-id page-id
-                           :shape-id (dm/get-prop shape :id)
-                           :property [prop]
-                           :value prop-value
-                           :t 0}))))))
+           (when-let [[property prop-value] (parse-track-option shape value)]
+             (st/emit! (dwa/add-animation-keyframe
+                        {:page-id page-id
+                         :shape-id (dm/get-prop shape :id)
+                         :property property
+                         :value prop-value
+                         :t 0})))))
 
         remove-animation
         (mf/use-fn
@@ -314,9 +364,7 @@
             [:& select {:default-value ""
                         :options (into [{:value ""
                                          :label (tr "workspace.options.animation.add-track")}]
-                                       (mapv #(do {:value (name %)
-                                                   :label (prop-label %)})
-                                             animatable-props))
+                                       (track-options shape))
                         :on-change add-track}]]
             [:div {:class (stl/css :track-duration)}
              (tr "workspace.options.animation.duration" (str (ctsan/duration animation)))]
