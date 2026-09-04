@@ -115,3 +115,10 @@
   gap: deprecated.$s-8;
   padding-block-end: deprecated.$s-4;
 }
+
+.preview-time {
+  @include t.use-typography("body-small");
+
+  color: var(--input-foreground-color);
+  font-variant-numeric: tabular-nums;
+}

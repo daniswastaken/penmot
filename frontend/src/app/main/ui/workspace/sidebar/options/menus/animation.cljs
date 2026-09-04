@@ -343,6 +343,13 @@
         preview-playing? (and (anim-preview/playing?)
                               (= (anim-preview/preview-frame-id) frame-id))
 
+        ;; subscribe the panel to the preview clock so the button
+        ;; label and the elapsed readout track playback live
+        _ (anim-preview/use-animation-preview)
+
+        preview-elapsed (when preview-playing?
+                         (anim-preview/preview-elapsed))
+
         toggle-preview
         (mf/use-fn
          (mf/deps frame-id preview-duration)
@@ -379,12 +386,16 @@
            [:> button* {:variant "primary"
                         :on-click generate-animation}
             (tr "workspace.options.animation.smart.generate")])
-         (when (and (some? frame-id) (pos? preview-duration))
-           [:> button* {:variant "secondary"
-                        :on-click toggle-preview}
-            (tr (if preview-playing?
-                  "workspace.options.animation.preview.stop"
-                  "workspace.options.animation.preview.play"))])]
+          (when (and (some? frame-id) (pos? preview-duration))
+            [:*
+             [:> button* {:variant "secondary"
+                          :on-click toggle-preview}
+              (tr (if preview-playing?
+                    "workspace.options.animation.preview.stop"
+                    "workspace.options.animation.preview.play"))]
+             (when preview-playing?
+               [:span {:class (stl/css :preview-time)}
+                (dm/str preview-elapsed " / " preview-duration " ms")])])]
 
         (if animation
           [:*
