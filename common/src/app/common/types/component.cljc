@@ -98,8 +98,10 @@
    :fixed-scroll            :constraints-group
    :bool-type               :content-group
    :bool-content            :content-group
-   :exports                 :exports-group
-   :grids                   :grids-group
+    :exports                 :exports-group
+    :grids                   :grids-group
+
+    :animation               :animation-group
 
    :show-content            :show-content
 
@@ -145,7 +147,8 @@
     :layout-item-absolute
     :layout-item-z-index
     :layout-item-align-self
-    :interactions})
+    :interactions
+    :animation})
 
 (defn resolve-sync-group
   "Makes a by type resolution of the sync group. This is necessary

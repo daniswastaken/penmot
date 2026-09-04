@@ -23,7 +23,8 @@
    [app.common.types.grid :as ctg]
    [app.common.types.path :as path]
    [app.common.types.plugins :as ctpg]
-   [app.common.types.shape.attrs :refer [default-color]]
+    [app.common.types.shape.animation :as ctsan]
+    [app.common.types.shape.attrs :refer [default-color]]
    [app.common.types.shape.background-blur :as ctsbb]
    [app.common.types.shape.blur :as ctsb]
    [app.common.types.shape.export :as ctse]
@@ -224,10 +225,11 @@
     [:vector {:gen/max 2} schema:stroke]]
    [:blend-mode {:optional true}
     [::sm/one-of blend-modes]]
-   [:interactions {:optional true}
-    [:vector {:gen/max 2} ctsi/schema:interaction]]
-   [:shadow {:optional true}
-    [:vector {:gen/max 1} ctss/schema:shadow]]
+    [:interactions {:optional true}
+     [:vector {:gen/max 2} ctsi/schema:interaction]]
+    [:animation {:optional true} ctsan/schema:animation]
+    [:shadow {:optional true}
+     [:vector {:gen/max 1} ctss/schema:shadow]]
    [:blur {:optional true} ctsb/schema:blur]
    [:background-blur {:optional true} ctsbb/schema:background-blur]
    [:grow-type {:optional true}
@@ -515,7 +517,7 @@
     :remote-synced :shape-ref :touched :blocked :collapsed :locked
     :hidden :masked-group :fills :proportion :proportion-lock :constraints-h
     :constraints-v :fixed-scroll :r1 :r2 :r3 :r4 :rotation :opacity :grids :exports
-    :strokes :blend-mode :interactions :shadow :blur :background-blur :grow-type :applied-tokens
+    :strokes :blend-mode :interactions :animation :shadow :blur :background-blur :grow-type :applied-tokens
     :plugin-data})
 
 (def ^:private allowed-shape-geom-attrs #{:x :y :width :height})
