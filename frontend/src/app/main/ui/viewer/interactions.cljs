@@ -17,7 +17,8 @@
    [app.main.data.viewer :as dv]
    [app.main.features :as features]
    [app.main.store :as st]
-   [app.main.ui.components.dropdown :refer [dropdown]]
+    [app.main.ui.components.dropdown :refer [dropdown]]
+    [app.main.ui.ds.buttons.button :refer [button*]]
     [app.main.ui.hooks :as h]
     [app.main.ui.icons :as deprecated-icon]
     [app.main.ui.viewer.hooks.animation-playback :as hooks-anim]
@@ -44,8 +45,18 @@
 
         animations-enabled? (features/use-feature "animations/v1")
 
-        [animation-elapsed _animation-playing? has-animations?]
+        [animation-elapsed animation-playing? has-animations? animation-controls]
         (hooks-anim/use-animation-playback objects (:id frame))
+
+        animation-paused? (and has-animations? (not animation-playing?))
+
+        on-animation-toggle
+        (mf/use-fn
+         (mf/deps animation-playing? animation-controls)
+         (fn []
+           (if animation-playing?
+             ((:pause animation-controls))
+             ((:resume animation-controls)))))
 
         ;; the offset prepare-objects moves shapes by (negated)
         anim-vector
@@ -130,15 +141,30 @@
                         :z-index 1}}
           [:& wrapper-fixed {:shape fixed-frame :view-box vbox}]]
 
-         [:svg {:class (stl/css :not-fixed)
-                :view-box vbox
-                :width (:width size)
-                :height (:height size)
-                :version "1.1"
-                :xmlnsXlink "http://www.w3.org/1999/xlink"
-                :xmlns "http://www.w3.org/2000/svg"
-                :fill "none"}
-          [:& wrapper-not-fixed {:shape frame :view-box vbox}]]])]]))
+          [:svg {:class (stl/css :not-fixed)
+                 :view-box vbox
+                 :width (:width size)
+                 :height (:height size)
+                 :version "1.1"
+                 :xmlnsXlink "http://www.w3.org/1999/xlink"
+                 :xmlns "http://www.w3.org/2000/svg"
+                 :fill "none"}
+           [:& wrapper-not-fixed {:shape frame :view-box vbox}]]
+
+          (when (and animations-enabled? has-animations?)
+            [:div {:class (stl/css :animation-controls)}
+             [:> button* {:variant "secondary"
+                          :class (stl/css :animation-toggle)
+                          :aria-label (tr (if animation-paused?
+                                            "workspace.viewer.animation.resume"
+                                            "workspace.viewer.animation.pause"))
+                          :on-click on-animation-toggle}
+              (tr (if animation-paused?
+                    "workspace.viewer.animation.resume"
+                    "workspace.viewer.animation.pause"))]
+             [:span {:class (stl/css :animation-time)}
+              (dm/str animation-elapsed " / "
+                      (or (:duration animation-controls) 0) " ms")]])])]]))
 
 (mf/defc viewport*
   {::mf/wrap [mf/memo]}

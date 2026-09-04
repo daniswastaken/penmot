@@ -7635,6 +7635,14 @@ msgstr "Hold"
 msgid "workspace.options.interaction-play-animation"
 msgstr "Play animation"
 
+#: src/app/main/ui/viewer/interactions.cljs
+msgid "workspace.viewer.animation.pause"
+msgstr "Pause"
+
+#: src/app/main/ui/viewer/interactions.cljs
+msgid "workspace.viewer.animation.resume"
+msgstr "Play"
+
 #: src/app/main/ui/workspace/sidebar/options/menus/blur.cljs
 #, unused
 msgid "workspace.options.blur-effects-options.title"

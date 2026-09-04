@@ -22,7 +22,8 @@
   (l/derived (l/key :viewer-animation-restarts) st/state))
 
 (defn use-animation-playback
-  "React hook. Returns [elapsed-ms playing? has-animations?]. When any
+  "React hook. Returns [elapsed-ms playing? has-animations? controls]
+  where controls is {:play :pause :resume :stop :duration}. When any
   shape under `objects` has an animation, runs a rAF loop advancing
   elapsed-ms; elapsed wraps at the longest animation duration (loop
   playback). `frame-id` (optional) watches the interaction-triggered
@@ -36,6 +37,7 @@
          playing?* (mf/use-state false)
 
          playing? (deref playing?*)
+         elapsed (deref elapsed*)
 
          restart-count
          (when frame-id
@@ -60,10 +62,30 @@
                  (reset! elapsed* 0)
                  (reset! playing?* true)))
 
+         pause (mf/use-fn
+                (fn []
+                  (reset! playing?* false)))
+
+         resume (mf/use-fn
+                 (mf/deps elapsed play-duration)
+                 (fn []
+                   (when (and (pos? (or play-duration 0))
+                              (< (or elapsed 0) play-duration))
+                     ;; continue from the frozen elapsed: shift the
+                     ;; start timestamp so the clock resumes mid-loop
+                     (reset! started-at* (- (js/performance.now) elapsed))
+                     (reset! playing?* true))))
+
          stop (mf/use-fn
                (fn []
                  (reset! playing?* false)
-                 (reset! elapsed* 0)))]
+                 (reset! elapsed* 0)))
+
+         controls {:play play
+                   :pause pause
+                   :resume resume
+                   :stop stop
+                   :duration play-duration}]
 
      ;; start automatically when the mounted objects contain animations
      (mf/use-effect
@@ -95,4 +117,4 @@
                 raf-id (.requestAnimationFrame js/window tick)]
             #(.cancelAnimationFrame js/window raf-id)))))
 
-     [(deref elapsed*) playing? has-animations?])))
+     [elapsed playing? has-animations? controls])))

@@ -104,3 +104,25 @@
     pointer-events: auto;
   }
 }
+
+.animation-controls {
+  @include deprecated.body-small-typography;
+
+  position: absolute;
+  inset-block-end: deprecated.$s-8;
+  inset-inline-start: deprecated.$s-8;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: deprecated.$s-8;
+  padding: deprecated.$s-4 deprecated.$s-8;
+  border-radius: deprecated.$br-8;
+  background-color: var(--input-background-color);
+}
+
+.animation-time {
+  @include deprecated.body-small-typography;
+
+  color: var(--input-foreground-color);
+  font-variant-numeric: tabular-nums;
+}
