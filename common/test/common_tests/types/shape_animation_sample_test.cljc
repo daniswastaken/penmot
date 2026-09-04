@@ -193,3 +193,29 @@
             anim3 (ctsan/make-animation
                    {[:fills 0] [(kf 0 lin-a) (kf 100 short-b)]})]
         (t/is (= lin-a (get (ctss/sample anim3 50) [:fills 0])))))))
+
+(t/deftest sample-stroke-interpolation
+  (let [s0 {:stroke-color "#ff0000" :stroke-opacity 1 :stroke-width 2
+            :stroke-style :solid :stroke-alignment :inner}
+        s1 {:stroke-color "#0000ff" :stroke-opacity 0.5 :stroke-width 6
+            :stroke-style :solid :stroke-alignment :inner}
+        anim (ctsan/make-animation
+              {[:strokes 0] [(kf 0 s0) (kf 100 s1)]})]
+    (t/testing "color, opacity and width lerp at midpoint"
+      (let [v (get (ctss/sample anim 50) [:strokes 0])]
+        (t/is (= "#7f007f" (:stroke-color v)))
+        (t/is (mth/close? 0.75 (:stroke-opacity v) 0.001))
+        (t/is (mth/close? 4 (:stroke-width v) 0.001))
+        (t/is (= :solid (:stroke-style v)))
+        (t/is (= :inner (:stroke-alignment v)))))
+
+    (t/testing "endpoints are exact"
+      (t/is (= s0 (get (ctss/sample anim 0) [:strokes 0])))
+      (t/is (= s1 (get (ctss/sample anim 100) [:strokes 0]))))
+
+    (t/testing "missing opacity on either side keeps the other's value"
+      (let [anim2 (ctsan/make-animation
+                   {[:strokes 0] [(kf 0 (dissoc s0 :stroke-opacity))
+                                  (kf 100 s1)]})
+            v (get (ctss/sample anim2 50) [:strokes 0])]
+        (t/is (nil? (:stroke-opacity v)))))))

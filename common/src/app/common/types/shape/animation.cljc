@@ -110,21 +110,39 @@
           (and (map? v)
                (contains? v :fill-color-gradient)))]])
 
+(def schema:stroke-value
+  "A solid-color stroke as a keyframe value ([:strokes i] tracks).
+   Mirrors the stroke attr vocabulary (shape.cljc owns the canonical
+   schema; this local map avoids a require cycle). Interpolatable:
+   stroke-color, stroke-opacity, stroke-width; the rest step."
+  [:map {:title "StrokeValue"}
+   [:stroke-color {:optional true} :string]
+   [:stroke-opacity {:optional true} ::sm/safe-number]
+   [:stroke-width {:optional true} ::sm/safe-number]
+   [:stroke-style {:optional true} :keyword]
+   [:stroke-alignment {:optional true} :keyword]
+   [:stroke-cap-start {:optional true} :keyword]
+   [:stroke-cap-end {:optional true} :keyword]
+   [:stroke-dash {:optional true} ::sm/safe-number]
+   [:stroke-gap {:optional true} ::sm/safe-number]
+   [:hidden {:optional true} :boolean]])
+
 (def schema:easing-params
   [:or {:title "EasingParams"}
    schema:bezier-params
    schema:spring-params])
 
 (def schema:keyframe-value
-  "Everything a keyframe can hold: scalars, a solid-color fill, or a
-   gradient fill. The fill branches come after `:string` so numeric
+  "Everything a keyframe can hold: scalars, solid/gradient fill maps,
+   or stroke maps. The map branches come after `:string` so numeric
    strings stay strings."
   [:or {:title "KeyframeValue"}
    :string
    ::sm/safe-number
    :boolean
    schema:fill-value
-   schema:gradient-fill-value])
+   schema:gradient-fill-value
+   schema:stroke-value])
 
 (def schema:keyframe
   [:map {:title "Keyframe"}
@@ -187,9 +205,9 @@
                                     el))
                                 %)
             :encode/json #(mapv (fn [el]
-                                 (if (keyword? el)
-                                   (name el)
-                                   el))
+                                  (if (keyword? el)
+                                    (name el)
+                                    el))
                                 %)}
    [:or :keyword ::sm/safe-int]])
 

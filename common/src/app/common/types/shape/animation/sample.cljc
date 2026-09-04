@@ -74,6 +74,35 @@
              (assoc :width  (lerp (:width g0) (:width g1) p))
              (assoc :stops stops))}))))
 
+(defn- mix-stroke
+  "Interpolate two solid strokes: lerp color, opacity and width.
+   Non-numeric/step fields take the ending value at p>0 (they cannot
+   be lerped)."
+  [v0 v1 p]
+  (cond-> {}
+    true
+    (merge (dissoc v1 :stroke-color :stroke-opacity :stroke-width))
+
+    (and (:stroke-color v0) (:stroke-color v1))
+    (assoc :stroke-color
+           (let [[r0 g0 b0] (ctc/hex->rgb (:stroke-color v0 "#000000"))
+                 [r1 g1 b1] (ctc/hex->rgb (:stroke-color v1 "#000000"))]
+             (ctc/rgb->hex [(lerp r0 r1 p)
+                            (lerp g0 g1 p)
+                            (lerp b0 b1 p)])))
+
+    (and (contains? v0 :stroke-opacity)
+         (contains? v1 :stroke-opacity))
+    (assoc :stroke-opacity (lerp (:stroke-opacity v0)
+                                 (:stroke-opacity v1)
+                                 p))
+
+    (and (contains? v0 :stroke-width)
+         (contains? v1 :stroke-width))
+    (assoc :stroke-width (lerp (:stroke-width v0)
+                               (:stroke-width v1)
+                               p))))
+
 (defn- mixable?
   [v0 v1]
   (cond
@@ -82,6 +111,8 @@
          (:fill-color v0) (:fill-color v1)) true
     (and (map? v0) (map? v1)
          (:fill-color-gradient v0) (:fill-color-gradient v1)) true
+    (and (map? v0) (map? v1)
+         (:stroke-color v0) (:stroke-color v1)) true
     :else false))
 
 (defn- mix
@@ -89,6 +120,7 @@
   (cond
     (and (number? v0) (number? v1)) (lerp v0 v1 p)
     (and (map? v0) (:fill-color-gradient v0)) (mix-gradient v0 v1 p)
+    (and (map? v0) (:stroke-color v0)) (mix-stroke v0 v1 p)
     (and (map? v0) (map? v1)) (mix-fill v0 v1 p)
     :else v0))
 
