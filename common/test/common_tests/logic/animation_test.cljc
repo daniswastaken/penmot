@@ -107,3 +107,45 @@
     (t/testing "custom duration is respected"
       (let [anims (cla/smart-animate-tree objects-before objects-after frame-id 500)]
         (t/is (= 500 (ctsan/duration (get anims frame-id))))))))
+
+(t/deftest smart-animate-structured-values
+  (let [id (uuid/next)
+        base (assoc (rect id 0 0)
+                    :fills [{:fill-color "#ff0000" :fill-opacity 1}]
+                    :strokes [{:stroke-color "#000000" :stroke-width 1}]
+                    :shadow [{:style :drop-shadow :offset-x 0 :offset-y 4 :blur 8 :spread 0
+                              :hidden false :color {:color "#000000" :opacity 0.25}}]
+                    :blur {:type :layer-blur :value 0 :hidden false})]
+
+    (t/testing "changed fill produces a fills track with plain fill maps"
+      (let [after (assoc base :fills [{:fill-color "#0000ff" :fill-opacity 0.5}])
+            anim (cla/smart-animate base after)]
+        (t/is (= [[:fills 0]] (ctsan/property-paths anim)))
+        (t/is (= {:fill-color "#ff0000" :fill-opacity 1}
+                 (:value (ctsan/first-keyframe anim [:fills 0]))))))
+
+    (t/testing "changed stroke produces a strokes track"
+      (let [after (assoc base :strokes [{:stroke-color "#ffffff" :stroke-width 4}])
+            anim (cla/smart-animate base after)]
+        (t/is (contains? (set (ctsan/property-paths anim)) [:strokes 0]))))
+
+    (t/testing "changed shadow produces a shadow track"
+      (let [after (assoc base :shadow [{:style :drop-shadow :offset-x 10 :offset-y 0 :blur 8 :spread 0
+                                         :hidden false :color {:color "#000000" :opacity 0.25}}])
+            anim (cla/smart-animate base after)]
+        (t/is (contains? (set (ctsan/property-paths anim)) [:shadow 0]))))
+
+    (t/testing "changed blur produces a blur track"
+      (let [after (assoc base :blur {:type :layer-blur :value 12 :hidden false})
+            anim (cla/smart-animate base after)]
+        (t/is (contains? (set (ctsan/property-paths anim)) [:blur]))))
+
+    (t/testing "fill present only after: no track invented"
+      (let [after (assoc (dissoc base :fills) :fills [{:fill-color "#00ff00"}])
+            before (dissoc base :fills)
+            anim (cla/smart-animate before after)]
+        (t/is (not (contains? (set (ctsan/property-paths anim)) [:fills 0])))))
+
+    (t/testing "unchanged paint values produce no tracks"
+      (let [anim (cla/smart-animate base (assoc base :name "renamed"))]
+        (t/is (ctsan/animation-empty? anim))))))
