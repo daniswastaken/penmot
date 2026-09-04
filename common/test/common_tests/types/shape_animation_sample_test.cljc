@@ -158,3 +158,38 @@
 
     (t/testing "before the first keyframe the track is inactive"
       (t/is (nil? (get (ctss/sample anim -1) [:fills 0]))))))
+
+(t/deftest sample-gradient-interpolation
+  (let [lin-a {:fill-color-gradient
+               {:type :linear :start-x 0 :start-y 0 :end-x 100 :end-y 0 :width 100
+                :stops [{:color "#ff0000" :opacity 1} {:color "#000000" :opacity 0}]}}
+        lin-b {:fill-color-gradient
+               {:type :linear :start-x 50 :start-y 20 :end-x 150 :end-y 20 :width 200
+                :stops [{:color "#0000ff" :opacity 0.5} {:color "#ffffff" :opacity 1}]}}
+        anim (ctsan/make-animation
+              {[:fills 0] [(kf 0 lin-a) (kf 100 lin-b)]})]
+    (t/testing "geometry and stops interpolate at midpoint"
+      (let [g (get-in (ctss/sample anim 50) [[:fills 0] :fill-color-gradient])]
+        (t/is (= :linear (:type g)))
+        (t/is (mth/close? 25 (:start-x g) 0.001))
+        (t/is (mth/close? 10 (:start-y g) 0.001))
+        (t/is (mth/close? 125 (:end-x g) 0.001))
+        (t/is (mth/close? 150 (:width g) 0.001))
+        (t/is (= "#7f007f" (get-in g [:stops 0 :color])))
+        (t/is (mth/close? 0.75 (get-in g [:stops 0 :opacity]) 0.001))))
+
+    (t/testing "endpoints are exact"
+      (t/is (= lin-a (get (ctss/sample anim 0) [:fills 0])))
+      (t/is (= lin-b (get (ctss/sample anim 100) [:fills 0]))))
+
+    (t/testing "mismatched gradient types step instead of mixing"
+      (let [rad-b (assoc-in lin-b [:fill-color-gradient :type] :radial)
+            anim2 (ctsan/make-animation
+                   {[:fills 0] [(kf 0 lin-a) (kf 100 rad-b)]})]
+        (t/is (= lin-a (get (ctss/sample anim2 50) [:fills 0])))))
+
+    (t/testing "mismatched stop counts step instead of mixing"
+      (let [short-b (update-in lin-b [:fill-color-gradient :stops] (comp vec butlast))
+            anim3 (ctsan/make-animation
+                   {[:fills 0] [(kf 0 lin-a) (kf 100 short-b)]})]
+        (t/is (= lin-a (get (ctss/sample anim3 50) [:fills 0])))))))

@@ -41,18 +41,54 @@
           (contains? v1 :fill-opacity))
       (assoc :fill-opacity (lerp o0 o1 p)))))
 
+(defn- mix-gradient
+  "Interpolate two gradient fills: lerp the geometry (start/end/width)
+   and per-stop color/opacity. Requires the same gradient type and
+   stop count; anything else steps (caller keeps the previous
+   value)."
+  [v0 v1 p]
+  (let [g0 (:fill-color-gradient v0)
+        g1 (:fill-color-gradient v1)]
+    (if (or (not= (:type g0) (:type g1))
+            (not= (count (:stops g0)) (count (:stops g1))))
+      v0
+      (let [stops (mapv (fn [s0 s1]
+                          (let [[r0 g0' b0] (ctc/hex->rgb (:color s0 "#000000"))
+                                [r1 g1' b1] (ctc/hex->rgb (:color s1 "#000000"))]
+                            (cond-> {:color (ctc/rgb->hex [(lerp r0 r1 p)
+                                                           (lerp g0' g1' p)
+                                                           (lerp b0 b1 p)])}
+                              (or (contains? s0 :opacity)
+                                  (contains? s1 :opacity))
+                              (assoc :opacity (lerp (or (:opacity s0) 1)
+                                                    (or (:opacity s1) 1)
+                                                    p)))))
+                        (:stops g0)
+                        (:stops g1))]
+        {:fill-color-gradient
+         (-> g0
+             (assoc :start-x (lerp (:start-x g0) (:start-x g1) p))
+             (assoc :start-y (lerp (:start-y g0) (:start-y g1) p))
+             (assoc :end-x   (lerp (:end-x g0) (:end-x g1) p))
+             (assoc :end-y   (lerp (:end-y g0) (:end-y g1) p))
+             (assoc :width  (lerp (:width g0) (:width g1) p))
+             (assoc :stops stops))}))))
+
 (defn- mixable?
   [v0 v1]
   (cond
     (and (number? v0) (number? v1)) true
     (and (map? v0) (map? v1)
          (:fill-color v0) (:fill-color v1)) true
+    (and (map? v0) (map? v1)
+         (:fill-color-gradient v0) (:fill-color-gradient v1)) true
     :else false))
 
 (defn- mix
   [v0 v1 p]
   (cond
     (and (number? v0) (number? v1)) (lerp v0 v1 p)
+    (and (map? v0) (:fill-color-gradient v0)) (mix-gradient v0 v1 p)
     (and (map? v0) (map? v1)) (mix-fill v0 v1 p)
     :else v0))
 

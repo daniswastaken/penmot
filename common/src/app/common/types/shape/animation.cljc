@@ -100,20 +100,31 @@
                (not (or (contains? v :fill-image)
                         (contains? v :fill-color-gradient)))))]])
 
+(def schema:gradient-fill-value
+  "A gradient fill as a keyframe value (gradient interpolation
+   track). Same shape as a solid fill value but carrying
+   :fill-color-gradient."
+  [:and {:title "GradientFillValue"}
+   ctf/schema:fill-attrs
+   [:fn (fn [v]
+          (and (map? v)
+               (contains? v :fill-color-gradient)))]])
+
 (def schema:easing-params
   [:or {:title "EasingParams"}
    schema:bezier-params
    schema:spring-params])
 
 (def schema:keyframe-value
-  "Everything a keyframe can hold: scalars or a solid-color fill
-   (cross-fade track). The fill branch comes after `:string` so
-   numeric strings stay strings."
+  "Everything a keyframe can hold: scalars, a solid-color fill, or a
+   gradient fill. The fill branches come after `:string` so numeric
+   strings stay strings."
   [:or {:title "KeyframeValue"}
    :string
    ::sm/safe-number
    :boolean
-   schema:fill-value])
+   schema:fill-value
+   schema:gradient-fill-value])
 
 (def schema:keyframe
   [:map {:title "Keyframe"}
@@ -174,12 +185,12 @@
                                       n
                                       (keyword el))
                                     el))
-                                 %)
+                                %)
             :encode/json #(mapv (fn [el]
-                                  (if (keyword? el)
-                                    (name el)
-                                    el))
-                                 %)}
+                                 (if (keyword? el)
+                                   (name el)
+                                   el))
+                                %)}
    [:or :keyword ::sm/safe-int]])
 
 (def schema:playback
@@ -291,9 +302,9 @@
   "Get the sorted keyframes for a property path."
   [animation path]
   (when-let [index (find-entry-index animation path)]
-  (-> (:tracks animation)
-      (nth index)
-      :keyframes)))
+    (-> (:tracks animation)
+        (nth index)
+        :keyframes)))
 
 (defn add-keyframe
   "Add or replace a keyframe on a track. Replacement happens when a
