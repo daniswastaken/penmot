@@ -15,23 +15,28 @@
    [app.common.types.shape.animation.sample :as ctss]
    [app.common.uuid :as uuid]))
 
+(def ^:private element-attrs
+  "Shape attributes that are vectors of maps and can carry indexed
+  animation tracks."
+  #{:fills :strokes :shadow})
+
 (defn- apply-sampled-path
-  "Apply one sampled track value to a shape. Property paths are either
-  [attr] scalars or [attr index] vectors (currently fills cross-fade
-  tracks); vector paths replace the element at index, preserving the
-  wrapper type the shape already uses."
+  "Apply one sampled track value to a shape. Property paths are
+  [attr] scalars (or whole-map values like blur), or [attr index]
+  vector paths that replace the element at index. Unknown vector
+  paths are skipped rather than corrupting the shape."
   [shape path value]
   (if (= 2 (count path))
     (let [[attr index] path]
-      (case attr
-        :fills
-        (let [fills (vec (or (:fills shape) []))]
-          (assoc shape :fills
-                 (into (subvec fills 0 (min index (count fills)))
-                       (conj (when (> (count fills) (inc index))
-                               (subvec fills (inc index)))
-                             value))))
-        ;; unknown vector path: skip rather than corrupt the shape
+      (if (contains? element-attrs attr)
+        (let [elements (vec (or (get shape attr) []))]
+          (if (< index (count elements))
+            (assoc shape attr
+                   (into (subvec elements 0 index)
+                         (conj (when (> (count elements) (inc index))
+                                 (subvec elements (inc index)))
+                               value)))
+            shape))
         shape))
     (assoc shape (first path) value)))
 

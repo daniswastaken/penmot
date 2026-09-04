@@ -61,7 +61,36 @@
             (wasm.api/set-shape-fills
              (:id shape)
              (assoc fills index (get sampled path))
-             false)))))))
+             false)))))
+
+    ;; strokes: same pattern as fills
+    (let [stroke-paths (filter #(= :strokes (first %)) (keys sampled))]
+      (when (seq stroke-paths)
+        (let [strokes (vec (or (:strokes shape) []))]
+          (doseq [path stroke-paths
+                  :let [index (second path)]
+                  :when (< index (count strokes))]
+            (wasm.api/set-shape-strokes
+             (:id shape)
+             (assoc strokes index (get sampled path))
+             false)))))
+
+    ;; shadow: whole vector through the context setter
+    (let [shadow-paths (filter #(= :shadow (first %)) (keys sampled))]
+      (when (seq shadow-paths)
+        (let [shadows (vec (or (:shadow shape) []))]
+          (doseq [path shadow-paths
+                  :let [index (second path)]
+                  :when (< index (count shadows))]
+            (wasm.api/set-shape-shadows
+             (assoc shadows index (get sampled path)))))))
+
+    ;; blur / background-blur: whole maps
+    (when (contains? sampled [:blur])
+      (wasm.api/set-shape-blur (get sampled [:blur])))
+
+    (when (contains? sampled [:background-blur])
+      (wasm.api/set-shape-background-blur (get sampled [:background-blur])))))
 
 (defn render-animation-frame!
   "Advance wasm playback: sample every animated shape under `frame-id`

@@ -55,12 +55,14 @@ Everything below is gated on that flag in the UI/viewer; data model is always sc
 
 - Viewer SVG: `viewer.interactions/viewport-svg*` applies `viewport-common/apply-animations`
   AFTER `prepare-objects`; positional tracks shift by the negated viewport vector
-  (vbox space), `[:fills i]` paths replace the fills element in place.
+  (vbox space), `[attr index]` paths (fills/strokes/shadow) replace the element in
+  place, whole-map paths (blur/background-blur) assoc directly.
 - Viewer WASM: `hooks.animation-wasm/render-animation-frame!` — per tick: `use-shape` +
-  incremental setters (selrect from sampled x/y/w/h, rotation/opacity/corners;
-  fills via `set-shape-fills`), then `render-sync-shape`. Serialized on the global
-  wasm render queue (`render-viewer-wasm/enqueue-wasm-render!` — public on purpose).
-  Sampled coords are design-space (wasm streams raw page objects).
+  incremental setters (selrect from sampled x/y/w/h, rotation/opacity/corners; fills and
+  strokes via `set-shape-fills`/`set-shape-strokes`, shadow via `set-shape-shadows`,
+  blur maps via `set-shape-blur`/`set-shape-background-blur`), then `render-sync-shape`.
+  Serialized on the global wasm render queue (`render-viewer-wasm/enqueue-wasm-render!`
+  — public on purpose). Sampled coords are design-space (wasm streams raw page objects).
 - Clock: `hooks.animation-playback` — component-local rAF (NO store round-trips per
   frame), loops/one-shots per the aggregate playback mode (ping-pong > loop > none),
   `pause` freezes keeping elapsed, `resume` shifts the start timestamp.
