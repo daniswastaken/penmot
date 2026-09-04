@@ -23,9 +23,10 @@
    [app.main.store :as st]
    [app.main.ui.context :as ctx]
    [app.main.ui.flex-controls :as mfc]
-   [app.main.ui.hooks :as ui-hooks]
-   [app.main.ui.measurements :as msr]
-   [app.main.ui.shapes.export :as use]
+    [app.main.ui.hooks :as ui-hooks]
+    [app.main.ui.measurements :as msr]
+    [app.main.ui.shapes.export :as use]
+    [app.main.ui.workspace.hooks.animation-preview :as anim-preview]
    [app.main.ui.workspace.shapes :as shapes]
    [app.main.ui.workspace.shapes.path.editor :refer [path-editor*]]
    [app.main.ui.workspace.shapes.text.editor :as editor-v1]
@@ -258,10 +259,20 @@
                                       (or drawing-obj transform)
                                       (not path-editing?))
 
-        render-objects           (mf/with-memo [base-objects path-editing? edition]
-                                   (cond-> base-objects
-                                     path-editing?
-                                     (assoc-in [edition :hidden] true)))
+         ;; animation preview: re-renders on every clock tick while
+         ;; the prototype-tab preview is playing
+         _ (anim-preview/use-animation-preview)
+
+         render-objects           (mf/with-memo [base-objects path-editing? edition
+                                                 (anim-preview/preview-frame-id)
+                                                 (anim-preview/preview-elapsed)]
+                                    (cond-> base-objects
+                                      path-editing?
+                                      (assoc-in [edition :hidden] true)
+
+                                      (and (anim-preview/playing?)
+                                           (some? (anim-preview/preview-frame-id)))
+                                      (anim-preview/apply-animations)))
         show-selrect?            (and selrect (or (empty? drawing) path-editing?) (not text-editing?))
         show-measures?           (and (not transform)
                                       (not path-editing?)

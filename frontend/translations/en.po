@@ -7691,6 +7691,14 @@ msgstr "Clear captured state"
 msgid "workspace.options.animation.smart.generate"
 msgstr "Animate changes"
 
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.preview.play"
+msgstr "Preview"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.preview.stop"
+msgstr "Stop preview"
+
 #: src/app/main/ui/workspace/sidebar/options/menus/blur.cljs
 #, unused
 msgid "workspace.options.blur-effects-options.title"

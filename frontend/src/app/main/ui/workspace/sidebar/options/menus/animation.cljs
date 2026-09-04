@@ -14,9 +14,10 @@
   entry surface and works end-to-end through the changes pipeline."
   (:require-macros [app.main.style :as stl])
   (:require
-   [app.common.data :as d]
-   [app.common.data.macros :as dm]
-   [app.common.types.shape.animation :as ctsan]
+    [app.common.data :as d]
+    [app.common.data.macros :as dm]
+    [app.common.files.helpers :as cfh]
+    [app.common.types.shape.animation :as ctsan]
     [app.main.data.workspace.animations :as dwa]
     [app.main.data.workspace.smart-animation :as dwsa]
     [app.main.refs :as refs]
@@ -28,6 +29,7 @@
    [app.main.ui.ds.controls.numeric-input :refer [numeric-input*]]
    [app.main.ui.ds.foundations.assets.icon :as i]
     [app.main.ui.ds.product.empty-state :refer [empty-state*]]
+    [app.main.ui.workspace.hooks.animation-preview :as anim-preview]
     [app.util.dom :as dom]
     [app.util.i18n :as i18n :refer [tr]]
     [rumext.v2 :as mf]))
@@ -322,7 +324,33 @@
 
         generate-animation
         (mf/use-fn
-         #(st/emit! (dwsa/generate-smart-animation {})))]
+         #(st/emit! (dwsa/generate-smart-animation {})))
+
+        ;; canvas preview: play the frame's animations in the
+        ;; workspace viewport (module-local clock, see the hook ns)
+        objects (mf/deref refs/workspace-page-objects)
+        frame-id (dm/get-prop shape :frame-id)
+
+        preview-duration
+        (when frame-id
+          (transduce (comp (map #(dm/get-in objects [% :animation]))
+                           (filter some?)
+                           (map ctsan/duration))
+                     max
+                     0
+                     (cfh/get-children-ids-with-self objects frame-id)))
+
+        preview-playing? (and (anim-preview/playing?)
+                              (= (anim-preview/preview-frame-id) frame-id))
+
+        toggle-preview
+        (mf/use-fn
+         (mf/deps frame-id preview-duration)
+         (fn []
+           (if preview-playing?
+             (anim-preview/stop-preview!)
+             (when (and frame-id (pos? preview-duration))
+               (anim-preview/start-preview! frame-id preview-duration)))))]
 
     [:div {:class (stl/css :section)}
      [:div {:class (stl/css :title)}
@@ -350,7 +378,13 @@
          (when (some? snapshot)
            [:> button* {:variant "primary"
                         :on-click generate-animation}
-            (tr "workspace.options.animation.smart.generate")])]
+            (tr "workspace.options.animation.smart.generate")])
+         (when (and (some? frame-id) (pos? preview-duration))
+           [:> button* {:variant "secondary"
+                        :on-click toggle-preview}
+            (tr (if preview-playing?
+                  "workspace.options.animation.preview.stop"
+                  "workspace.options.animation.preview.play"))])]
 
         (if animation
           [:*
