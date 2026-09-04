@@ -58,6 +58,50 @@
              ((:pause animation-controls))
              ((:resume animation-controls)))))
 
+        animation-duration (or (:duration animation-controls) 0)
+
+        scrub-ratio
+        (if (pos? animation-duration)
+          (min 100 (max 0 (* 100 (/ animation-elapsed animation-duration))))
+          0)
+
+        scrubbing?* (mf/use-state false)
+
+        seek-from-event
+        (mf/use-fn
+         (mf/deps animation-controls)
+         (fn [event]
+           (when-let [duration (:duration animation-controls)]
+             (let [node (dom/get-current-target event)
+                   rect (.getBoundingClientRect node)
+                   width (.-width rect)]
+               (when (pos? width)
+                 (let [x (- (:x (dom/get-client-position event)) (.-left rect))
+                       ratio (min 1 (max 0 (/ x width)))]
+                   ((:seek animation-controls) (* ratio duration))))))))
+
+        on-scrub-down
+        (mf/use-fn
+         (mf/deps animation-controls)
+         (fn [event]
+           (dom/capture-pointer event)
+           ;; pause while scrubbing; release keeps the paused state so
+           ;; the frame stays where the user left it
+           ((:pause animation-controls))
+           (reset! scrubbing?* true)
+           (seek-from-event event)))
+
+        on-scrub-move
+        (mf/use-fn
+         (fn [event]
+           (when (deref scrubbing?*)
+             (seek-from-event event))))
+
+        on-scrub-up
+        (mf/use-fn
+         (fn []
+           (reset! scrubbing?* false)))
+
         ;; the offset prepare-objects moves shapes by (negated)
         anim-vector
         (-> (gpt/point (:x size) (:y size))
@@ -162,6 +206,18 @@
               (tr (if animation-paused?
                     "workspace.viewer.animation.resume"
                     "workspace.viewer.animation.pause"))]
+             [:div {:class (stl/css :animation-scrub)
+                    :role "slider"
+                    :tab-index 0
+                    :aria-label (tr "workspace.viewer.animation.scrub")
+                    :aria-valuemin 0
+                    :aria-valuemax (or (:duration animation-controls) 0)
+                    :aria-valuenow animation-elapsed
+                    :on-pointer-down on-scrub-down
+                    :on-pointer-move on-scrub-move
+                    :on-lost-pointer-capture on-scrub-up}
+              [:div {:class (stl/css :animation-scrub-fill)
+                     :style {:width (dm/str scrub-ratio "%")}}]]
              [:span {:class (stl/css :animation-time)}
               (dm/str animation-elapsed " / "
                       (or (:duration animation-controls) 0) " ms")]])])]]))

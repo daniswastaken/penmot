@@ -126,3 +126,21 @@
   color: var(--input-foreground-color);
   font-variant-numeric: tabular-nums;
 }
+
+.animation-scrub {
+  position: relative;
+  block-size: deprecated.$s-8;
+  inline-size: deprecated.$s-160;
+  border-radius: deprecated.$br-8;
+  background-color: var(--input-foreground-color-disabled);
+  cursor: ew-resize;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.animation-scrub-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background-color: var(--accent-color);
+}

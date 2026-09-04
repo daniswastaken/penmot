@@ -7663,6 +7663,10 @@ msgstr "Pause"
 msgid "workspace.viewer.animation.resume"
 msgstr "Play"
 
+#: src/app/main/ui/viewer/interactions.cljs
+msgid "workspace.viewer.animation.scrub"
+msgstr "Animation position"
+
 #: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
 msgid "workspace.options.animation.playback.none"
 msgstr "Play once"

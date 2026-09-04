@@ -104,10 +104,22 @@
                  (reset! playing?* false)
                  (reset! elapsed* 0)))
 
+         seek (mf/use-fn
+              (mf/deps play-duration)
+              (fn [t]
+                (when play-duration
+                  (let [t (max 0 (min t play-duration))]
+                    (reset! elapsed* t)
+                    ;; re-anchor the clock so playback continues from the
+                    ;; seek point (raw t maps to elapsed t on the forward
+                    ;; half of every mode)
+                    (reset! started-at* (- (js/performance.now) t))))))
+
          controls {:play play
                    :pause pause
                    :resume resume
                    :stop stop
+                   :seek seek
                    :duration play-duration}]
 
      ;; start automatically when the mounted objects contain animations
