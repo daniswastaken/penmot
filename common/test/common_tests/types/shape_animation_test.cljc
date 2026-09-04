@@ -146,6 +146,33 @@
       (t/is (= 50 (ctsan/clamp-time anim 50)))
       (t/is (= 400 (ctsan/clamp-time anim 999))))))
 
+(t/deftest playback-elapsed-modes
+  (let [anim-none    (ctsan/make-animation {[:opacity] [(kf 0 1) (kf 100 0)]})
+        anim-loop    (ctsan/make-animation {[:opacity] [(kf 0 1) (kf 100 0)]}
+                                          :loop :loop)
+        anim-pong    (ctsan/make-animation {[:opacity] [(kf 0 1) (kf 100 0)]}
+                                          :loop :ping-pong)]
+    (t/testing ":none holds at duration after one pass"
+      (t/is (= 40 (ctsan/playback-elapsed anim-none 40)))
+      (t/is (= 100 (ctsan/playback-elapsed anim-none 140)))
+      (t/is (= 100 (ctsan/playback-elapsed anim-none 9999))))
+
+    (t/testing ":loop wraps into [0, duration)"
+      (t/is (= 40 (ctsan/playback-elapsed anim-loop 40)))
+      (t/is (= 0 (ctsan/playback-elapsed anim-loop 100)))
+      (t/is (= 40 (ctsan/playback-elapsed anim-loop 140))))
+
+    (t/testing ":ping-pong reverses on the second half of the cycle"
+      (t/is (= 40 (ctsan/playback-elapsed anim-pong 40)))
+      (t/is (= 100 (ctsan/playback-elapsed anim-pong 100)))
+      (t/is (= 60 (ctsan/playback-elapsed anim-pong 140)))
+      (t/is (= 0 (ctsan/playback-elapsed anim-pong 200)))
+      (t/is (= 40 (ctsan/playback-elapsed anim-pong 240))))
+
+    (t/testing "degenerate inputs never throw"
+      (t/is (= 0 (ctsan/playback-elapsed {:tracks []} 50)))
+      (t/is (= 0 (ctsan/playback-elapsed anim-none -10))))))
+
 (t/deftest schema-roundtrip
   (t/testing "a well-formed animation passes the schema check"
     (let [anim (ctsan/make-animation

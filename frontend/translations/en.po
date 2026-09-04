@@ -7643,6 +7643,18 @@ msgstr "Pause"
 msgid "workspace.viewer.animation.resume"
 msgstr "Play"
 
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.playback.none"
+msgstr "Play once"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.playback.loop"
+msgstr "Loop"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.playback.ping-pong"
+msgstr "Ping-pong"
+
 #: src/app/main/ui/workspace/sidebar/options/menus/blur.cljs
 #, unused
 msgid "workspace.options.blur-effects-options.title"

@@ -21,6 +21,24 @@
 (def ^:private restarts-ref
   (l/derived (l/key :viewer-animation-restarts) st/state))
 
+(def ^:private mode-priority {:ping-pong 2 :loop 1 :none 0})
+
+(defn- aggregate-playback-mode
+  "The most continuous playback mode among the frame's animations:
+  ping-pong > loop > none."
+  [objects]
+  (transduce
+   (comp (map :animation)
+         (filter some?)
+         (map ctsan/playback-loop))
+   (completing (fn [acc mode]
+                 (if (> (get mode-priority mode -1)
+                        (get mode-priority acc -1))
+                   mode
+                   acc)))
+   nil
+   (vals objects)))
+
 (defn use-animation-playback
   "React hook. Returns [elapsed-ms playing? has-animations? controls]
   where controls is {:play :pause :resume :stop :duration}. When any
@@ -55,6 +73,11 @@
          has-animations? (pos? (count durations))
 
          play-duration (when has-animations? (reduce max 0 durations))
+
+         playback-mode (when has-animations? (aggregate-playback-mode objects))
+
+         ;; a :none animation plays once and stops at the end
+         one-shot? (= :none playback-mode)
 
          play (mf/use-fn
                (fn []
@@ -103,17 +126,23 @@
           (play))))
 
      ;; the rAF loop: advance elapsed from the performance clock,
-     ;; wrapping at the animation duration (loop)
+     ;; mapping through the aggregate playback mode (wrap / bounce /
+     ;; one-shot)
      (mf/use-effect
-      (mf/deps playing? play-duration)
+      (mf/deps playing? play-duration playback-mode)
       (fn []
         (when (and playing? play-duration)
           (let [started-at (deref started-at*)
+                mode-animation {:playback {:loop playback-mode}
+                                 :tracks [{:property [:duration]
+                                           :keyframes [{:t 0 :value 0}
+                                                       {:t play-duration :value 0}]}]}
                 tick (fn tick []
-                       (let [raw  (- (js/performance.now) started-at)
-                             elapsed (long (mod raw play-duration))]
+                       (let [raw     (- (js/performance.now) started-at)
+                             elapsed (ctsan/playback-elapsed mode-animation raw)]
                          (reset! elapsed* elapsed)
-                         (.requestAnimationFrame js/window tick)))
+                         (when-not (and one-shot? (>= raw play-duration))
+                           (.requestAnimationFrame js/window tick))))
                 raf-id (.requestAnimationFrame js/window tick)]
             #(.cancelAnimationFrame js/window raf-id)))))
 

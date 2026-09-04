@@ -226,7 +226,16 @@
          (mf/deps shape page-id)
          #(st/emit! (dwa/remove-animation
                      {:page-id page-id
-                      :shape-id (dm/get-prop shape :id)})))]
+                      :shape-id (dm/get-prop shape :id)})))
+
+        set-playback-mode
+        (mf/use-fn
+         (mf/deps shape page-id)
+         (fn [value]
+           (st/emit! (dwa/update-animation-playback
+                      {:page-id page-id
+                       :shape-id (dm/get-prop shape :id)
+                       :playback {:loop (keyword value)}}))))]
 
     [:div {:class (stl/css :section)}
      [:div {:class (stl/css :title)}
@@ -259,9 +268,15 @@
                                                    :label (prop-label %)})
                                              animatable-props))
                         :on-change add-track}]]
-           [:div {:class (stl/css :track-duration)}
-            (tr "workspace.options.animation.duration" (str (ctsan/duration animation)))]]
+            [:div {:class (stl/css :track-duration)}
+             (tr "workspace.options.animation.duration" (str (ctsan/duration animation)))]
+            [:div {:class (stl/css :playback-mode)}
+             [:& select {:default-value (name (ctsan/playback-loop animation))
+                         :options [{:value "none" :label (tr "workspace.options.animation.playback.none")}
+                                   {:value "loop" :label (tr "workspace.options.animation.playback.loop")}
+                                   {:value "ping-pong" :label (tr "workspace.options.animation.playback.ping-pong")}]
+                         :on-change set-playback-mode}]]]
 
-          [:div {:class (stl/css :empty)}
-           [:> empty-state* {:icon i/curve
-                            :text (tr "workspace.options.animation.empty")}]])])]))
+           [:div {:class (stl/css :empty)}
+            [:> empty-state* {:icon i/curve
+                             :text (tr "workspace.options.animation.empty")}]])])]))

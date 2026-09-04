@@ -400,3 +400,32 @@
 (defn alternate?
   [animation]
   (boolean (get-in animation [:playback :alternate])))
+
+(defn playback-elapsed
+  "Map a raw (possibly unbounded) elapsed time onto the animation's
+   playback mode:
+
+   - :none      holds at duration after one pass
+   - :loop      wraps into [0, duration)
+   - :ping-pong cycles duration*2: forward, then reversed, then repeats
+
+   Returns a number in [0, duration]."
+  [animation raw-elapsed]
+  (let [duration (duration animation)]
+    (if (or (not (pos? duration)) (neg? raw-elapsed))
+      0
+      (case (playback-loop animation)
+        :none
+        (min raw-elapsed duration)
+
+        :loop
+        (long (mod raw-elapsed duration))
+
+        :ping-pong
+        (let [cycle (long (mod raw-elapsed (* 2 duration)))]
+          (if (> cycle duration)
+            (- (* 2 duration) cycle)
+            cycle))
+
+        ;; unknown mode: clamp (never throw during playback)
+        (min raw-elapsed duration)))))
