@@ -80,7 +80,23 @@
                        :shape-id (dm/get-prop shape :id)
                        :property property
                        :t t
-                       :update-fn #(assoc % :easing easing)}))))]
+                       ;; switching easing resets params to the new
+                       ;; easing's defaults (fresh spring/bezier state)
+                       :update-fn #(assoc (dissoc % :easing-params)
+                                           :easing easing)}))))
+
+        set-easing-param
+        (mf/use-fn
+         (mf/deps shape page-id property)
+         (fn [t param value]
+           (st/emit! (dwa/update-animation-keyframe
+                      {:page-id page-id
+                       :shape-id (dm/get-prop shape :id)
+                       :property property
+                       :t t
+                       :update-fn #(assoc-in %
+                                            [:easing-params param]
+                                            (or (d/parse-double value) 0))}))))]
 
     [:div {:class (stl/css :track-row)}
      [:span {:class (stl/css :track-name)} (prop-label prop-key)]
@@ -96,6 +112,27 @@
                                           :label (easing-label %)})
                                     easing-options)
                      :on-change #(set-easing (:t kf) (keyword %))}]
+
+         (when (= (:easing kf) :spring)
+           [:div {:class (stl/css :keyframe-params)}
+            (for [param [:stiffness :damping :mass]]
+              [:& numeric-input*
+               {:key (name param)
+                :placeholder (name param)
+                :default-value (str (get-in kf [:easing-params param]
+                                           (param ctsan/spring-defaults)))
+                :on-change #(set-easing-param (:t kf) param %)}])])
+
+         (when (= (:easing kf) :bezier)
+           [:div {:class (stl/css :keyframe-params)}
+            (for [param [:x1 :y1 :x2 :y2]]
+              [:& numeric-input*
+               {:key (name param)
+                :placeholder (name param)
+                :default-value (str (get-in kf [:easing-params param]
+                                           (param ctsan/bezier-defaults)))
+                :on-change #(set-easing-param (:t kf) param %)}])])
+
          [:> icon-button* {:variant "ghost"
                            :aria-label (tr "workspace.options.animation.remove-keyframe")
                            :on-click #(remove-keyframe (:t kf))
