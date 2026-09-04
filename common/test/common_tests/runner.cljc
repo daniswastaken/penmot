@@ -82,6 +82,7 @@
    [common-tests.types.organization-test]
    [common-tests.types.path-data-test]
     [common-tests.types.shape-decode-encode-test]
+    [common-tests.types.shape-animation-sample-test]
     [common-tests.types.shape-animation-test]
     [common-tests.types.shape-interactions-test]
    [common-tests.types.shape-layout-test]
@@ -162,6 +163,7 @@
    'common-tests.types.organization-test
    'common-tests.types.path-data-test
     'common-tests.types.shape-decode-encode-test
+    'common-tests.types.shape-animation-sample-test
     'common-tests.types.shape-animation-test
     'common-tests.types.shape-interactions-test
    'common-tests.types.shape-layout-test
@@ -185,7 +187,7 @@
 #?(:cljs
    (defmethod t/report [:cljs.test/default :begin-test-var] [m]
      (let [v (:var m)]
-       (println (str "  ▸ " (:ns (meta v)) "/" (:name (meta v)))))))
+       (println (str "  Ã¢â€“Â¸ " (:ns (meta v)) "/" (:name (meta v)))))))
 
 #?(:cljs
    (do

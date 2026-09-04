@@ -195,7 +195,7 @@
 ;; HELPERS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def default-easing :ease)
+(def default-easing :linear)
 
 (defn make-keyframe
   "Build a keyframe with defaults applied. `:easing` describes the
