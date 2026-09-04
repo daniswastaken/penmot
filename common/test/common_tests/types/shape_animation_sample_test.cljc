@@ -219,3 +219,38 @@
                                   (kf 100 s1)]})
             v (get (ctss/sample anim2 50) [:strokes 0])]
         (t/is (nil? (:stroke-opacity v)))))))
+
+(t/deftest sample-shadow-interpolation
+  (let [sh0 {:style :drop-shadow :offset-x 0 :offset-y 4 :blur 8 :spread 0
+             :hidden false :color {:color "#000000" :opacity 0.25}}
+        sh1 {:style :drop-shadow :offset-x 10 :offset-y -4 :blur 16 :spread 2
+             :hidden false :color {:color "#ffffff" :opacity 0.75}}
+        anim (ctsan/make-animation
+              {[:shadow 0] [(kf 0 sh0) (kf 100 sh1)]})]
+    (t/testing "offsets, blur, spread and color lerp at midpoint"
+      (let [v (get (ctss/sample anim 50) [:shadow 0])]
+        (t/is (mth/close? 5 (:offset-x v) 0.001))
+        (t/is (mth/close? 0 (:offset-y v) 0.001))
+        (t/is (mth/close? 12 (:blur v) 0.001))
+        (t/is (mth/close? 1 (:spread v) 0.001))
+        (t/is (mth/close? 0.5 (get-in v [:color :opacity]) 0.001))
+        (t/is (= "#7f7f7f" (get-in v [:color :color])))
+        (t/is (= :drop-shadow (:style v)))))
+
+    (t/testing "endpoints are exact"
+      (t/is (= sh0 (get (ctss/sample anim 0) [:shadow 0])))
+      (t/is (= sh1 (get (ctss/sample anim 100) [:shadow 0]))))))
+
+(t/deftest sample-blur-interpolation  (let [b0 {:type :layer-blur :value 0 :hidden false}
+        b1 {:type :layer-blur :value 20 :hidden false}
+        anim (ctsan/make-animation
+              {[:blur] [(kf 0 b0) (kf 100 b1)]})]
+    (t/testing "blur value lerps at midpoint"
+      (let [v (get (ctss/sample anim 50) [:blur])]
+        (t/is (mth/close? 10 (:value v) 0.001))
+        (t/is (= :layer-blur (:type v)))))
+
+    (t/testing "endpoints are exact"
+      (t/is (= b0 (get (ctss/sample anim 0) [:blur])))
+      (t/is (= b1 (get (ctss/sample anim 100) [:blur]))))))
+

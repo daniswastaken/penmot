@@ -127,22 +127,67 @@
    [:stroke-gap {:optional true} ::sm/safe-number]
    [:hidden {:optional true} :boolean]])
 
+(def schema:plain-color
+  "A plain applied color (hex + opacity) as used inside shadows.
+   Gradient/image colors cannot interpolate and step instead."
+  [:map {:title "PlainColor"}
+   [:color {:optional true} :string]
+   [:opacity {:optional true} ::sm/safe-number]])
+
+(def schema:shadow-value
+  "A drop/inner shadow as a keyframe value ([:shadow i] tracks).
+   Interpolatable: offset-x/offset-y, blur, spread and a plain
+   color; style and hidden step."
+  [:map {:title "ShadowValue"}
+   [:style {:optional true} :keyword]
+   [:offset-x {:optional true} ::sm/safe-number]
+   [:offset-y {:optional true} ::sm/safe-number]
+   [:blur {:optional true} ::sm/safe-number]
+   [:spread {:optional true} ::sm/safe-number]
+   [:hidden {:optional true} :boolean]
+   [:color {:optional true} schema:plain-color]])
+
+(def schema:blur-value
+  "A layer/background blur as a keyframe value ([:blur] /
+   [:background-blur] tracks). Interpolatable: value; hidden steps."
+  [:map {:title "BlurValue"}
+   [:type {:optional true} :keyword]
+   [:value {:optional true} ::sm/safe-number]
+   [:hidden {:optional true} :boolean]])
+
 (def schema:easing-params
   [:or {:title "EasingParams"}
    schema:bezier-params
    schema:spring-params])
 
 (def schema:keyframe-value
-  "Everything a keyframe can hold: scalars, solid/gradient fill maps,
-   or stroke maps. The map branches come after `:string` so numeric
-   strings stay strings."
-  [:or {:title "KeyframeValue"}
+  "Everything a keyframe can hold: scalars, fill/stroke/shadow/blur
+   maps. The map branches come after `:string` so numeric strings
+   stay strings.
+
+   The `:or` picks the first branch whose DECODE succeeds, and the
+   fill-attrs branch happily decodes any map — so the enum-ish
+   keyword fields of shadow/blur/stroke values would stay JSON
+   strings. A parent-level decode re-keywordizes them."
+  [:or {:title "KeyframeValue"
+        :decode/json (fn [v]
+                       (if (map? v)
+                         (cond-> v
+                           (string? (:style v))        (update :style keyword)
+                           (string? (:type v))         (update :type keyword)
+                           (string? (:stroke-style v)) (update :stroke-style keyword)
+                           (string? (:stroke-alignment v)) (update :stroke-alignment keyword)
+                           (string? (:stroke-cap-start v)) (update :stroke-cap-start keyword)
+                           (string? (:stroke-cap-end v)) (update :stroke-cap-end keyword))
+                         v))}
    :string
    ::sm/safe-number
    :boolean
    schema:fill-value
    schema:gradient-fill-value
-   schema:stroke-value])
+   schema:stroke-value
+   schema:shadow-value
+   schema:blur-value])
 
 (def schema:keyframe
   [:map {:title "Keyframe"}

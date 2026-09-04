@@ -103,6 +103,55 @@
                                (:stroke-width v1)
                                p))))
 
+(defn- mix-plain-color
+  "Lerp RGB and opacity of two plain color maps."
+  [c0 c1 p]
+  (cond-> {}
+    (and (:color c0) (:color c1))
+    (assoc :color
+           (let [[r0 g0 b0] (ctc/hex->rgb (:color c0 "#000000"))
+                 [r1 g1 b1] (ctc/hex->rgb (:color c1 "#000000"))]
+             (ctc/rgb->hex [(lerp r0 r1 p)
+                            (lerp g0 g1 p)
+                            (lerp b0 b1 p)])))
+
+    (and (contains? c0 :opacity) (contains? c1 :opacity))
+    (assoc :opacity (lerp (:opacity c0) (:opacity c1) p))))
+
+(defn- mix-shadow
+  "Interpolate two shadows: lerp offsets, blur, spread and a plain
+   color; style/hidden take the ending value."
+  [v0 v1 p]
+  (cond-> {}
+    true
+    (merge (dissoc v1 :offset-x :offset-y :blur :spread :color))
+
+    (and (contains? v0 :offset-x) (contains? v1 :offset-x))
+    (assoc :offset-x (lerp (:offset-x v0) (:offset-x v1) p))
+
+    (and (contains? v0 :offset-y) (contains? v1 :offset-y))
+    (assoc :offset-y (lerp (:offset-y v0) (:offset-y v1) p))
+
+    (and (contains? v0 :blur) (contains? v1 :blur))
+    (assoc :blur (lerp (:blur v0) (:blur v1) p))
+
+    (and (contains? v0 :spread) (contains? v1 :spread))
+    (assoc :spread (lerp (:spread v0) (:spread v1) p))
+
+    (and (map? (:color v0)) (map? (:color v1)))
+    (assoc :color (mix-plain-color (:color v0) (:color v1) p))))
+
+(defn- mix-blur-value
+  "Interpolate two blur maps: lerp value; type/hidden take the ending
+   value."
+  [v0 v1 p]
+  (cond-> {}
+    true
+    (merge (dissoc v1 :value))
+
+    (and (contains? v0 :value) (contains? v1 :value))
+    (assoc :value (lerp (:value v0) (:value v1) p))))
+
 (defn- mixable?
   [v0 v1]
   (cond
@@ -113,6 +162,11 @@
          (:fill-color-gradient v0) (:fill-color-gradient v1)) true
     (and (map? v0) (map? v1)
          (:stroke-color v0) (:stroke-color v1)) true
+    (and (map? v0) (map? v1)
+         (contains? v0 :offset-x) (contains? v1 :offset-x)) true
+    (and (map? v0) (map? v1)
+         (contains? v0 :value) (contains? v1 :value)
+         (or (:type v0) (:type v1))) true
     :else false))
 
 (defn- mix
@@ -121,6 +175,9 @@
     (and (number? v0) (number? v1)) (lerp v0 v1 p)
     (and (map? v0) (:fill-color-gradient v0)) (mix-gradient v0 v1 p)
     (and (map? v0) (:stroke-color v0)) (mix-stroke v0 v1 p)
+    (and (map? v0) (contains? v0 :offset-x)) (mix-shadow v0 v1 p)
+    (and (map? v0) (contains? v0 :value) (or (:type v0) (:type v1)))
+    (mix-blur-value v0 v1 p)
     (and (map? v0) (map? v1)) (mix-fill v0 v1 p)
     :else v0))
 
