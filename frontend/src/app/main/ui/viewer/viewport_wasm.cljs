@@ -9,7 +9,10 @@
   (:require
    [app.common.files.helpers :as cfh]
    [app.common.geom.point :as gpt]
+   [app.main.features :as features]
    [app.main.render-viewer-wasm :as rwv]
+   [app.main.ui.viewer.hooks.animation-playback :as hooks-anim]
+   [app.main.ui.viewer.hooks.animation-wasm :as anim-wasm]
    [app.main.ui.viewer.shapes :as shapes]
    [app.main.ui.viewer.viewport-common :as vpc]
    [app.render-wasm.api :as wasm.api]
@@ -102,10 +105,22 @@
         frame   (cond-> frame is-fixed (assoc :fixed-scroll true))
         objects (cond-> objects is-fixed (assoc-in [frame-id :fixed-scroll] true))
 
-        has-fixed?
-        (and (not is-fixed)
-             (some #(cfh/fixed-scroll? (get objects %))
-                   (cfh/get-children-ids objects frame-id)))
+         has-fixed?
+         (and (not is-fixed)
+              (some #(cfh/fixed-scroll? (get objects %))
+                    (cfh/get-children-ids objects frame-id)))
+
+         animations-enabled? (features/use-feature "animations/v1")
+
+         [animation-elapsed _animation-playing? has-animations?]
+         (hooks-anim/use-animation-playback objects)
+
+         ;; re-render the wasm frame whenever the playback clock moves
+         _ (mf/use-effect
+            (mf/deps animation-elapsed has-animations? animations-enabled? objects frame-id)
+            (fn []
+              (when (and animations-enabled? has-animations? (pos? animation-elapsed))
+                (anim-wasm/render-animation-frame! objects frame-id animation-elapsed))))
 
         prepared
         (mf/with-memo [objects frame size delta]

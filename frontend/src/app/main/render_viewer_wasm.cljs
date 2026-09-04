@@ -21,7 +21,8 @@
 ;; The WASM module is a single global instance; serialize offscreen work.
 (defonce ^:private wasm-render-queue (atom (p/resolved nil)))
 
-(defn- enqueue-wasm-render!
+(defn enqueue-wasm-render!
+  "Serialize a wasm render task against the global module instance."
   [task]
   (let [next-p (-> @wasm-render-queue
                    (p/handle (fn [_ _] (task))))]
