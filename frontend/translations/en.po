@@ -7531,6 +7531,106 @@ msgstr "Details"
 msgid "workspace.options.add-interaction"
 msgstr "Click the + button to add interactions."
 
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.title"
+msgstr "Animation"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.empty"
+msgstr "Add a property track to animate this shape"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.add-track"
+msgstr "Add property"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.remove-keyframe"
+msgstr "Remove keyframe"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.remove-animation"
+msgstr "Remove animation"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.time"
+msgstr "Time (ms)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.duration"
+msgstr "Duration: %s ms"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.opacity"
+msgstr "Opacity"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.x"
+msgstr "X"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.y"
+msgstr "Y"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.width"
+msgstr "Width"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.height"
+msgstr "Height"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.rotation"
+msgstr "Rotation"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.r1"
+msgstr "Radius"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.r2"
+msgstr "Radius 2"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.r3"
+msgstr "Radius 3"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.prop.r4"
+msgstr "Radius 4"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.linear"
+msgstr "Linear"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.ease"
+msgstr "Ease"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.ease-in"
+msgstr "Ease in"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.ease-out"
+msgstr "Ease out"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.ease-in-out"
+msgstr "Ease in out"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.spring"
+msgstr "Spring"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.bezier"
+msgstr "Bezier"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/animation.cljs
+msgid "workspace.options.animation.easing.hold"
+msgstr "Hold"
+
 #: src/app/main/ui/workspace/sidebar/options/menus/blur.cljs
 #, unused
 msgid "workspace.options.blur-effects-options.title"

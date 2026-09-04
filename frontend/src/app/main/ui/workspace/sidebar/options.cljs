@@ -25,6 +25,7 @@
    [app.main.ui.workspace.sidebar.debug-shape-info :refer [debug-shape-info*]]
    [app.main.ui.workspace.sidebar.options.drawing :as drawing]
    [app.main.ui.workspace.sidebar.options.menus.align :refer [align-options*]]
+   [app.main.ui.workspace.sidebar.options.menus.animation :refer [animation-section*]]
    [app.main.ui.workspace.sidebar.options.menus.bool :refer [bool-options*]]
    [app.main.ui.workspace.sidebar.options.menus.component :refer [component-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.grid-cell :as grid-cell]
@@ -283,10 +284,14 @@
                           :on-change on-option-tab-change
                           :selected (name options-mode)
                           :class (stl/css :options-tab-switcher)}
-        (case options-mode
-          :prototype
-          [:div {:class (stl/css :element-options :interaction-options)}
-           [:> interactions-menu* {:shape (first shapes)}]]
+         (case options-mode
+           :prototype
+           [:div {:class (stl/css :element-options :interaction-options)}
+            [:> interactions-menu* {:shape (first shapes)}]
+            (when (and (features/use-feature "animations/v1")
+                       (seq shapes))
+              [:> animation-section* {:shape (first shapes)
+                                      :page-id page-id}])]
 
           :inspect
           [:div {:class (stl/css :element-options :inspect-options)}
