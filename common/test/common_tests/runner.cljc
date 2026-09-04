@@ -46,7 +46,8 @@
    [common-tests.geom-shapes-tree-seq-test]
    [common-tests.geom-snap-test]
    [common-tests.geom-test]
-   [common-tests.logic.chained-propagation-test]
+   [common-tests.logic.animation-test]
+    [common-tests.logic.chained-propagation-test]
    [common-tests.logic.comp-creation-test]
    [common-tests.logic.comp-detach-with-nested-test]
    [common-tests.logic.comp-main-edit-breaks-copy-slots-test]
@@ -127,7 +128,8 @@
    'common-tests.geom-shapes-tree-seq-test
    'common-tests.geom-snap-test
    'common-tests.geom-test
-   'common-tests.logic.chained-propagation-test
+   'common-tests.logic.animation-test
+    'common-tests.logic.chained-propagation-test
    'common-tests.logic.comp-creation-test
    'common-tests.logic.comp-detach-with-nested-test
    'common-tests.logic.comp-main-edit-breaks-copy-slots-test
@@ -187,7 +189,7 @@
 #?(:cljs
    (defmethod t/report [:cljs.test/default :begin-test-var] [m]
      (let [v (:var m)]
-       (println (str "  Ã¢â€“Â¸ " (:ns (meta v)) "/" (:name (meta v)))))))
+       (println (str "  ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ " (:ns (meta v)) "/" (:name (meta v)))))))
 
 #?(:cljs
    (do
