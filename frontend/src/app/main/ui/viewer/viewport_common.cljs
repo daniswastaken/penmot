@@ -15,6 +15,26 @@
    [app.common.types.shape.animation.sample :as ctss]
    [app.common.uuid :as uuid]))
 
+(defn- apply-sampled-path
+  "Apply one sampled track value to a shape. Property paths are either
+  [attr] scalars or [attr index] vectors (currently fills cross-fade
+  tracks); vector paths replace the element at index, preserving the
+  wrapper type the shape already uses."
+  [shape path value]
+  (if (= 2 (count path))
+    (let [[attr index] path]
+      (case attr
+        :fills
+        (let [fills (vec (or (:fills shape) []))]
+          (assoc shape :fills
+                 (into (subvec fills 0 (min index (count fills)))
+                       (conj (when (> (count fills) (inc index))
+                               (subvec fills (inc index)))
+                             value))))
+        ;; unknown vector path: skip rather than corrupt the shape
+        shape))
+    (assoc shape (first path) value)))
+
 (defn apply-animations
   "Overlay sampled keyframe values onto prepared (vbox-space) objects
   for playback at time `t-ms`. `vector` is the negated viewport offset
@@ -32,12 +52,17 @@
              (if (empty? sampled)
                objects
                (reduce-kv (fn [shape path value]
-                            (case (first path)
-                              :x (assoc shape :x (+ value (:x vector)))
-                              :y (assoc shape :y (+ value (:y vector)))
-                              (assoc shape (first path) value)))
+                            (cond-> (apply-sampled-path shape path value)
+                              ;; positional tracks need the viewport shift
+                              (and (= :x (first path))
+                                   (= 1 (count path)))
+                              (update :x + (:x vector))
+
+                               (and (= :y (first path))
+                                    (= 1 (count path)))
+                               (update :y + (:y vector))))
                           shape sampled)))
-           objects)))
+            objects)))
      objects
      ids)))
 

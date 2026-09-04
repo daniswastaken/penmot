@@ -14,10 +14,47 @@
 
 (ns app.common.types.shape.animation.sample
   (:require
+   [app.common.types.color :as ctc]
    [app.common.types.shape.animation :as ctsan]
    [app.common.types.shape.animation.easing :as ctse]))
 
 (declare sample-keyframes)
+
+(defn- lerp
+  [v0 v1 p]
+  (+ v0 (* p (- v1 v0))))
+
+(defn- mix-fill
+  "Cross-fade two solid-color fill maps: lerp RGB and opacity."
+  [v0 v1 p]
+  (let [[r0 g0 b0] (ctc/hex->rgb (:fill-color v0 "#000000"))
+        [r1 g1 b1] (ctc/hex->rgb (:fill-color v1 "#000000"))
+        o0 (or (:fill-opacity v0) 1)
+        o1 (or (:fill-opacity v1) 1)]
+    (cond-> {}
+      true
+      (assoc :fill-color (ctc/rgb->hex [(lerp r0 r1 p)
+                                        (lerp g0 g1 p)
+                                        (lerp b0 b1 p)]))
+
+      (or (contains? v0 :fill-opacity)
+          (contains? v1 :fill-opacity))
+      (assoc :fill-opacity (lerp o0 o1 p)))))
+
+(defn- mixable?
+  [v0 v1]
+  (cond
+    (and (number? v0) (number? v1)) true
+    (and (map? v0) (map? v1)
+         (:fill-color v0) (:fill-color v1)) true
+    :else false))
+
+(defn- mix
+  [v0 v1 p]
+  (cond
+    (and (number? v0) (number? v1)) (lerp v0 v1 p)
+    (and (map? v0) (map? v1)) (mix-fill v0 v1 p)
+    :else v0))
 
 (defn- segment-sample
   "Sample the segment [kf-prev, kf-next] at time t. The segment's
@@ -34,15 +71,19 @@
       (true? (:hold kf-next)) v0
       ;; zero-length segment: target value
       (<= t1 t0) v1
-      ;; non-numeric values cannot be interpolated: step, keeping the
+      ;; unmixable values cannot be interpolated: step, keeping the
       ;; previous value until the keyframe instant
-      (not (and (number? v0) (number? v1))) v0
+      (not (mixable? v0 v1)) v0
       :else
       (let [p    (double (/ (- t t0) (- t1 t0)))
             ease (ctse/ease-fn (:easing kf-next ctsan/default-easing)
                                (:easing-params kf-next))
-            p'   (ease p)]
-        (+ v0 (* p' (- v1 v0)))))))
+            p'   (double (ease p))]
+        (cond
+          ;; exact endpoints: never round-trip through the mixer
+          (<= p' 0.0) v0
+          (>= p' 1.0) v1
+          :else (mix v0 v1 p'))))))
 
 (defn- sample-keyframes
   "Value of one track's keyframe vector at time t."

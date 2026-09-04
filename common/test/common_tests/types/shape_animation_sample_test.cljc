@@ -139,3 +139,22 @@
                                    :loop :loop)]
     (t/testing "sample is unaffected by playback metadata"
       (t/is (mth/close? 0.75 (get (ctss/sample anim 50) [:opacity]))))))
+
+(t/deftest sample-fill-crossfade
+  (let [red   {:fill-color "#ff0000" :fill-opacity 1}
+        blue  {:fill-color "#0000ff" :fill-opacity 0.5}
+        anim  (ctsan/make-animation
+               {[:fills 0] [(kf 0 red) (kf 100 blue)]})]
+    (t/testing "fill cross-fades color and opacity at midpoint"
+      (let [v (get (ctss/sample anim 50) [:fills 0])]
+        (t/is (map? v))
+        ;; 255,0,0 -> 0,0,255 at p=0.5 gives 127,0,127 after int rounding
+        (t/is (= "#7f007f" (:fill-color v)))
+        (t/is (mth/close? 0.75 (:fill-opacity v) 0.001))))
+
+    (t/testing "endpoints are exact"
+      (t/is (= red (get (ctss/sample anim 0) [:fills 0])))
+      (t/is (= blue (get (ctss/sample anim 100) [:fills 0]))))
+
+    (t/testing "before the first keyframe the track is inactive"
+      (t/is (nil? (get (ctss/sample anim -1) [:fills 0]))))))

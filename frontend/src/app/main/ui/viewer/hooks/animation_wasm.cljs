@@ -48,7 +48,20 @@
       (wasm.api/set-shape-corners [(get sampled [:r1] (:r1 shape))
                                    (get sampled [:r2] (:r2 shape))
                                    (get sampled [:r3] (:r3 shape))
-                                   (get sampled [:r4] (:r4 shape))]))))
+                                   (get sampled [:r4] (:r4 shape))]))
+
+    ;; fills cross-fade: replace the animated index with the sampled
+    ;; fill and push the whole fills seq through the bridge
+    (let [fill-paths (filter #(= :fills (first %)) (keys sampled))]
+      (when (seq fill-paths)
+        (let [fills (vec (or (:fills shape) []))]
+          (doseq [path fill-paths
+                  :let [index (second path)]
+                  :when (< index (count fills))]
+            (wasm.api/set-shape-fills
+             (:id shape)
+             (assoc fills index (get sampled path))
+             false)))))))
 
 (defn render-animation-frame!
   "Advance wasm playback: sample every animated shape under `frame-id`

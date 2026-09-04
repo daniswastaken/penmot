@@ -27,7 +27,8 @@
 (ns app.common.types.shape.animation
   (:require
    [app.common.schema :as sm]
-   [app.common.schema.generators :as sg]))
+   [app.common.schema.generators :as sg]
+   [app.common.types.fills :as ctf]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SCHEMA
@@ -86,15 +87,38 @@
    ::sm/safe-number
    :boolean])
 
+(def schema:fill-value
+  "A solid-color fill as a keyframe value (fills cross-fade track).
+   Reuses the fill schema — JSON codecs come with it — restricted to
+   solid colors because gradient/image interpolation needs its own
+   value schemas."
+  [:and {:title "FillValue"}
+   ctf/schema:fill-attrs
+   [:fn (fn [v]
+          (and (map? v)
+               (contains? v :fill-color)
+               (not (or (contains? v :fill-image)
+                        (contains? v :fill-color-gradient)))))]])
+
 (def schema:easing-params
   [:or {:title "EasingParams"}
    schema:bezier-params
    schema:spring-params])
 
+(def schema:keyframe-value
+  "Everything a keyframe can hold: scalars or a solid-color fill
+   (cross-fade track). The fill branch comes after `:string` so
+   numeric strings stay strings."
+  [:or {:title "KeyframeValue"}
+   :string
+   ::sm/safe-number
+   :boolean
+   schema:fill-value])
+
 (def schema:keyframe
   [:map {:title "Keyframe"}
    [:t ::sm/safe-int]
-   [:value schema:scalar-value]
+   [:value schema:keyframe-value]
    [:easing {:optional true} [::sm/one-of easing-types]]
    [:easing-params {:optional true} schema:easing-params]
    [:hold {:optional true} :boolean]])
