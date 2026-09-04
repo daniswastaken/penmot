@@ -72,8 +72,11 @@ Everything below is gated on that flag in the UI/viewer; data model is always sc
 ## Testing
 
 - `common-tests.types.shape-animation-test`, `-sample-test`, `common-tests.logic.animation-test`.
-  Full JVM suite from `common/`: `clojure -M:dev:test` (see `mem:common/testing`; on
-  Windows use the cljx.ps1 wrapper in `$env:TEMP\opencode`).
+  All three are registered in BOTH runner lists — they run on JVM and JS. The JS suite
+  must stay green too: shadow-cljs compiles the animation namespaces with zero warnings;
+  run `clojure -M:dev:shadow-cljs compile test` then `node target/tests/test.js` from
+  `common/` (needs `pnpm install` in common/ first for date-fns etc.). See
+  `mem:common/testing`; on Windows use the cljx.ps1 wrapper in `$env:TEMP\opencode`.
 - Keyframe timing values: use `mth/close?` in tests — interpolation coerces to doubles
   (`(= 1 1.0)` is false).
 
