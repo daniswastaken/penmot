@@ -18,9 +18,10 @@
    [app.main.features :as features]
    [app.main.store :as st]
    [app.main.ui.components.dropdown :refer [dropdown]]
-   [app.main.ui.hooks :as h]
-   [app.main.ui.icons :as deprecated-icon]
-   [app.main.ui.viewer.shapes :as shapes]
+    [app.main.ui.hooks :as h]
+    [app.main.ui.icons :as deprecated-icon]
+    [app.main.ui.viewer.hooks.animation-playback :as hooks-anim]
+    [app.main.ui.viewer.shapes :as shapes]
    [app.main.ui.viewer.viewport-common :as vpc]
    [app.main.ui.viewer.viewport-wasm :as viewport.wasm]
    [app.util.dom :as dom]
@@ -41,6 +42,17 @@
         objects   (:objects page)
         objects   (cond-> objects is-fixed (assoc-in [(:id frame) :fixed-scroll] true))
 
+        animations-enabled? (features/use-feature "animations/v1")
+
+        [animation-elapsed _animation-playing? has-animations?]
+        (hooks-anim/use-animation-playback objects)
+
+        ;; the offset prepare-objects moves shapes by (negated)
+        anim-vector
+        (-> (gpt/point (:x size) (:y size))
+            (gpt/add delta)
+            (gpt/negate))
+
         fixed-ids (vpc/get-fixed-ids objects)
 
         not-fixed-ids
@@ -49,11 +61,13 @@
 
         calculate-objects
         (fn [ids]
-          (->> ids
-               (map (d/getf objects))
-               (concat [frame])
-               (d/index-by :id)
-               (vpc/prepare-objects frame size delta)))
+          (cond->> (->> ids
+                        (map (d/getf objects))
+                        (concat [frame])
+                        (d/index-by :id)
+                        (vpc/prepare-objects frame size delta))
+            (and animations-enabled? has-animations?)
+            (partial vpc/apply-animations (:id frame) animation-elapsed anim-vector)))
 
         objects-fixed
         (mf/with-memo [fixed-ids page frame size delta]

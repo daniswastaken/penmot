@@ -12,7 +12,34 @@
    [app.common.geom.point :as gpt]
    [app.common.geom.shapes :as gsh]
    [app.common.types.modifiers :as ctm]
+   [app.common.types.shape.animation.sample :as ctss]
    [app.common.uuid :as uuid]))
+
+(defn apply-animations
+  "Overlay sampled keyframe values onto prepared (vbox-space) objects
+  for playback at time `t-ms`. `vector` is the negated viewport offset
+  that `prepare-objects` moved shapes by; positional tracks (x/y) are
+  shifted by it so they land in the same space. Only shapes inside
+  `frame-id` with an `:animation` are touched. Returns objects
+  unchanged when nothing animates."
+  [objects frame-id t-ms vector]
+  (let [ids (cfh/get-children-ids-with-self objects frame-id)]
+    (reduce
+     (fn [objects id]
+       (let [shape (get objects id)]
+         (if-let [animation (:animation shape)]
+           (let [sampled (ctss/sample animation t-ms)]
+             (if (empty? sampled)
+               objects
+               (reduce-kv (fn [shape path value]
+                            (case (first path)
+                              :x (assoc shape :x (+ value (:x vector)))
+                              :y (assoc shape :y (+ value (:y vector)))
+                              (assoc shape (first path) value)))
+                          shape sampled)))
+           objects)))
+     objects
+     ids)))
 
 (defn prepare-objects
   [frame size delta objects]
