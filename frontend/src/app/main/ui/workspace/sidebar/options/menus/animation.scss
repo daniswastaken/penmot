@@ -1,0 +1,107 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS SUBSIDIARY SL
+
+@use "refactor/common-refactor.scss" as deprecated;
+@use "ds/_sizes.scss" as *;
+@use "ds/typography.scss" as t;
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-4;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-8;
+}
+
+.track-row {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-4;
+}
+
+.track-name {
+  @include t.use-typography("body-small");
+
+  color: var(--input-foreground-color);
+}
+
+.track-keyframes {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-4;
+}
+
+.keyframe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: deprecated.$s-4;
+  padding: deprecated.$s-4 deprecated.$s-8;
+  border-radius: deprecated.$br-8;
+  background-color: var(--input-background-color);
+  cursor: grab;
+  touch-action: none;
+
+  &:hover {
+    background-color: var(--input-background-color-hover);
+  }
+}
+
+.keyframe-dragging {
+  cursor: grabbing;
+  outline: deprecated.$br-8 solid var(--accent-color);
+  outline-offset: deprecated.$s-2;
+}
+
+.keyframe-t {
+  @include t.use-typography("body-small");
+
+  color: var(--input-foreground-color);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: $sz-48;
+}
+
+.keyframe-value {
+  @include t.use-typography("body-small");
+
+  color: var(--input-foreground-color-active);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyframe-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: deprecated.$s-4;
+}
+
+.keyframe-add {
+  display: flex;
+  align-items: center;
+  gap: deprecated.$s-4;
+}
+
+.add-track {
+  display: flex;
+}
+
+.track-duration {
+  @include t.use-typography("body-small");
+
+  color: var(--input-foreground-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  display: flex;
+  justify-content: center;
+  padding: deprecated.$s-8;
+}

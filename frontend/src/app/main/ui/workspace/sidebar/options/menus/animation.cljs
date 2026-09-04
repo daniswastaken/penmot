@@ -24,9 +24,10 @@
    [app.main.ui.ds.buttons.icon-button :refer [icon-button*]]
    [app.main.ui.ds.controls.numeric-input :refer [numeric-input*]]
    [app.main.ui.ds.foundations.assets.icon :as i]
-   [app.main.ui.ds.product.empty-state :refer [empty-state*]]
-   [app.util.i18n :as i18n :refer [tr]]
-   [rumext.v2 :as mf]))
+    [app.main.ui.ds.product.empty-state :refer [empty-state*]]
+    [app.util.dom :as dom]
+    [app.util.i18n :as i18n :refer [tr]]
+    [rumext.v2 :as mf]))
 
 (def ^:private animatable-props
   [:opacity :x :y :width :height :rotation :r1 :r2 :r3 :r4])
@@ -96,47 +97,99 @@
                        :t t
                        :update-fn #(assoc-in %
                                             [:easing-params param]
-                                            (or (d/parse-double value) 0))}))))]
+                                            (or (d/parse-double value) 0))}))))
+
+        ;; drag-to-move: horizontal pointer drag over a keyframe chip
+        ;; re-times it. The event commits once, on pointer release, so
+        ;; the undo stack stays clean.
+        drag-state* (mf/use-state nil)
+
+        on-keyframe-drag-start
+        (mf/use-fn
+         (mf/deps property)
+         (fn [event kf]
+           ;; only drag when the chip itself is grabbed, so selects
+           ;; and param inputs inside it keep working
+           (when (= (dom/get-target event) (dom/get-current-target event))
+             (dom/capture-pointer event)
+             (reset! drag-state* {:t (:t kf)
+                                  :start-x (:x (dom/get-client-position event))
+                                  :moved false}))))
+
+        on-keyframe-drag-move
+        (mf/use-fn
+         (fn [event]
+           (when-let [drag @drag-state*]
+             (let [delta-x (- (:x (dom/get-client-position event))
+                              (:start-x drag))]
+               ;; 2ms per pixel of horizontal drag
+               (reset! drag-state*
+                       (assoc drag
+                              :current-t (max 0 (long (+ (:t drag) (* 2 delta-x))))
+                              :moved true))))))
+
+        on-keyframe-drag-end
+        (mf/use-fn
+         (mf/deps shape page-id property)
+         (fn []
+           (some-> @drag-state*
+                   (as-> drag
+                     (do (reset! drag-state* nil)
+                         (when (and (:moved drag) (:current-t drag))
+                           (st/emit! (dwa/move-animation-keyframe
+                                      {:page-id page-id
+                                       :shape-id (dm/get-prop shape :id)
+                                       :property property
+                                       :from-t (:t drag)
+                                       :to-t (:current-t drag)}))))))))]
 
     [:div {:class (stl/css :track-row)}
      [:span {:class (stl/css :track-name)} (prop-label prop-key)]
 
      [:div {:class (stl/css :track-keyframes)}
       (for [kf kfs]
-        [:div {:class (stl/css :keyframe)
-               :key (str (:t kf))}
-         [:span {:class (stl/css :keyframe-t)} (str (:t kf) "ms")]
-         [:span {:class (stl/css :keyframe-value)} (pr-str (:value kf))]
-         [:& select {:default-value (name (or (:easing kf) :linear))
-                     :options (mapv #(do {:value (name %)
-                                          :label (easing-label %)})
-                                    easing-options)
-                     :on-change #(set-easing (:t kf) (keyword %))}]
+        (let [drag @drag-state*
+              dragging-this? (and (some? drag) (= (:t drag) (:t kf)))
+              display-t (if dragging-this?
+                          (or (:current-t drag) (:t kf))
+                          (:t kf))]
+          [:div {:class (stl/css :keyframe (when dragging-this? :keyframe-dragging))
+                 :key (str (:t kf))
+                 :on-pointer-down #(on-keyframe-drag-start % kf)
+                 :on-pointer-move on-keyframe-drag-move
+                 :on-lost-pointer-capture on-keyframe-drag-end}
+           [:span {:class (stl/css :keyframe-t)} (str display-t "ms")]
+           [:span {:class (stl/css :keyframe-value)} (pr-str (:value kf))]
+           [:& select {:default-value (name (or (:easing kf) :linear))
+                       :options (mapv #(do {:value (name %)
+                                            :label (easing-label %)})
+                                      easing-options)
+                       :on-change #(set-easing (:t kf) (keyword %))}]
 
-         (when (= (:easing kf) :spring)
-           [:div {:class (stl/css :keyframe-params)}
-            (for [param [:stiffness :damping :mass]]
-              [:& numeric-input*
-               {:key (name param)
-                :placeholder (name param)
-                :default-value (str (get-in kf [:easing-params param]
-                                           (param ctsan/spring-defaults)))
-                :on-change #(set-easing-param (:t kf) param %)}])])
+           (when (= (:easing kf) :spring)
+             [:div {:class (stl/css :keyframe-params)}
+              (for [param [:stiffness :damping :mass]]
+                [:& numeric-input*
+                 {:key (name param)
+                  :placeholder (name param)
+                  :default-value (str (get-in kf [:easing-params param]
+                                             (param ctsan/spring-defaults)))
+                  :on-change #(set-easing-param (:t kf) param %)}])])
 
-         (when (= (:easing kf) :bezier)
-           [:div {:class (stl/css :keyframe-params)}
-            (for [param [:x1 :y1 :x2 :y2]]
-              [:& numeric-input*
-               {:key (name param)
-                :placeholder (name param)
-                :default-value (str (get-in kf [:easing-params param]
-                                           (param ctsan/bezier-defaults)))
-                :on-change #(set-easing-param (:t kf) param %)}])])
+           (when (= (:easing kf) :bezier)
+             [:div {:class (stl/css :keyframe-params)}
+              (for [param [:x1 :y1 :x2 :y2]]
+                [:& numeric-input*
+                 {:key (name param)
+                  :placeholder (name param)
+                  :default-value (str (get-in kf [:easing-params param]
+                                             (param ctsan/bezier-defaults)))
+                  :on-change #(set-easing-param (:t kf) param %)}])])
 
-         [:> icon-button* {:variant "ghost"
-                           :aria-label (tr "workspace.options.animation.remove-keyframe")
-                           :on-click #(remove-keyframe (:t kf))
-                           :icon i/close}]])
+           [:> icon-button* {:variant "ghost"
+                             :aria-label (tr "workspace.options.animation.remove-keyframe")
+                             :on-click #(remove-keyframe (:t kf))
+                             :icon i/close}]]))
 
       [:div {:class (stl/css :keyframe-add)}
        [:& numeric-input* {:placeholder (tr "workspace.options.animation.time")
