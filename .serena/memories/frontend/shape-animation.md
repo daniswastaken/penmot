@@ -68,6 +68,11 @@ Everything below is gated on that flag in the UI/viewer; data model is always sc
   `pause` freezes keeping elapsed, `resume` shifts the start timestamp.
   Interaction triggers: `:play-animation` action bumps `:viewer-animation-restarts`
   in viewer state; the hook watches the counter and replays from t=0.
+- Workspace preview: `ui.workspace.hooks.animation-preview` — module-local atom +
+  ONE rAF loop (re-render signal via add-watch; no potok events, nothing persisted).
+  BOTH workspace viewports (svg + wasm) overlay `apply-animations` on their
+  render/modified objects while previewing; the prototype-tab Preview button starts
+  the selected shape's frame subtree at its longest animation duration.
 
 ## Testing
 

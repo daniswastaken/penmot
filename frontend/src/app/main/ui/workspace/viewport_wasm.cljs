@@ -24,8 +24,9 @@
    [app.main.store :as st]
    [app.main.ui.context :as ctx]
    [app.main.ui.flex-controls :as mfc]
-   [app.main.ui.hooks :as ui-hooks]
-   [app.main.ui.measurements :as msr]
+    [app.main.ui.hooks :as ui-hooks]
+    [app.main.ui.measurements :as msr]
+    [app.main.ui.workspace.hooks.animation-preview :as anim-preview]
    [app.main.ui.workspace.shapes.path.editor :refer [path-editor*]]
    [app.main.ui.workspace.shapes.text.editor :as editor-v1]
    [app.main.ui.workspace.shapes.text.text-edition-outline :refer [text-edition-outline*]]
@@ -194,12 +195,21 @@
         background        (get page :background clr/canvas)
         guides            (get page :guides)
 
-        base-objects      (ui-hooks/with-focus-objects objects focus)
+         base-objects      (ui-hooks/with-focus-objects objects focus)
 
-        objects-modified
-        (mf/with-memo
-          [base-objects wasm-modifiers]
-          (apply-modifiers-to-selected selected base-objects wasm-modifiers))
+         ;; animation preview: re-renders on every clock tick while
+         ;; the prototype-tab preview is playing
+         _ (anim-preview/use-animation-preview)
+
+         objects-modified
+         (mf/with-memo
+           [base-objects wasm-modifiers
+            (anim-preview/preview-frame-id)
+            (anim-preview/preview-elapsed)]
+           (cond-> (apply-modifiers-to-selected selected base-objects wasm-modifiers)
+             (and (anim-preview/playing?)
+                  (some? (anim-preview/preview-frame-id)))
+             (anim-preview/apply-animations)))
 
         selected-shapes   (->> selected
                                (into [] (keep (d/getf objects-modified)))
